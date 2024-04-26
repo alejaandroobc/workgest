@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "43132227235",
+    "firebase_url": "https://workgest-fb045-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "workgest-fb045",
+    "storage_bucket": "workgest-fb045.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:43132227235:android:658ce0fb558e93778db916",
+        "android_client_info": {
+          "package_name": "com.abc.workgest.workgest"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-cL-QZk723OKQSD-4qU-bsLD-SmbQL9Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
