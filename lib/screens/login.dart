@@ -34,7 +34,7 @@ class _LoginScreenState extends State<LoginScreen>{
       onTap: (){
         _focusEmail.unfocus();
         _focusPassword.unfocus();
-    },
+        },
       child: Scaffold(
         body: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -116,7 +116,7 @@ class _LoginScreenState extends State<LoginScreen>{
                           'Login',
                           style: TextStyle(
                             fontSize: 20,
-                            color: Colors.black,
+                            color: Colors.white,
 
                           ),
                         ),
