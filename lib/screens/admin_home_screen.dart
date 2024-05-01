@@ -1,7 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
-import 'package:workgest/screens/home.dart';
+import 'package:workgest/screens/user_screen.dart';
+import 'package:workgest/widgets/home.dart';
 
 class UserAdminScreen extends StatefulWidget{
   final User user;
@@ -44,17 +46,13 @@ class _UserAdminScreenState extends State<UserAdminScreen> {
       body: Column(
         children: [
           if(_indexselected == 0)
-            Row(
-
-            ),
+            Expanded(child: UserInformationScreen(_user)),
           if(_indexselected == 1)
           Expanded(
-              child: Home()
+              child:Home()
           ),
-          if(_indexselected == 1)
-            Row(
-
-            )
+          if(_indexselected == 2)
+            Row()
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -66,8 +64,6 @@ class _UserAdminScreenState extends State<UserAdminScreen> {
                 color: Colors.white,
               ),
               label: 'User',
-
-
 
             ),
             BottomNavigationBarItem(
@@ -101,80 +97,15 @@ class _UserAdminScreenState extends State<UserAdminScreen> {
       switch(_indexselected){
         case 0:
           titulo= 'User';
+          break;
         case 1:
           titulo= 'Home';
+          break;
         case 2:
           titulo= 'Settings';
+          break;
       }
     });
   }
 }
 
-/*
-* Column(
-        children: [
-          if(_indexselected == 0)
-            Container(
-              child: Row(
-                children: [
-                  Butto
-                ],
-              ),
-            ),
-          if(_indexselected == 1)
-            Container(
-              child: Column(
-                children: [
-                  Text(titulo)
-                ],
-              ),
-            ),
-
-          if(_indexselected == 2)
-            Container(
-              child: Column(
-                children: [
-                  Text(titulo)
-                ],
-              ),
-            )
-
-        ],
-      ),
-* 
-* */
-
-/**
- * if(_indexselected == 0)
-    Container(
-    child: Row(
-    children: [
-    ElevatedButton(
-    onPressed: null,
-    child: Container(
-    child: Icon(Icons.ac_unit),
-    color: Colors.blue,
-    )
-    )
-    ],
-    ),
-    ),
-    if(_indexselected == 1)
-    Container(
-    child: Column(
-    children: [
-    Container()
-    ],
-    ),
-    ),
-
-    if(_indexselected == 2)
-    Container(
-    child: Column(
-    children: [
-    Text(titulo)
-    ],
-    ),
-    )
-
- */
