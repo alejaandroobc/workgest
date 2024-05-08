@@ -57,7 +57,5 @@ class FireAuth{
       print(e);
     }
     return user;
-
   }
-
 }

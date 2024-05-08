@@ -20,8 +20,6 @@ class _UserAdminScreenState extends State<UserAdminScreen> {
   String titulo= "Home";
 
 
-
-
   @override
   void initState() {
     super.initState();
@@ -52,7 +50,11 @@ class _UserAdminScreenState extends State<UserAdminScreen> {
               child:Home()
           ),
           if(_indexselected == 2)
-            Row()
+            Row(
+              children: [
+                Text(_user.displayName ?? 'Nombre no disponible'),
+              ],
+            )
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(

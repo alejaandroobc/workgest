@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:workgest/screens/usermanage.dart';
+import 'package:workgest/screens/user_manage_screen.dart';
+import 'package:workgest/screens/weatherscreen.dart';
 
 class Home extends StatefulWidget {
 
@@ -48,7 +49,11 @@ class _HomeState extends State<Home>{
       ),
       Expanded(
           child: IconButton(
-              onPressed: null,
+              onPressed: (){
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => WeatherApp())
+                );
+              },
               icon: Icon(
                 Icons.sunny,
                 size: 40,
