@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:workgest/screens/user_manage_screen.dart';
+import 'package:workgest/screens/actividades_screen.dart';
+import 'package:workgest/screens/manage/summercamper_manage_screen.dart';
+import 'package:workgest/screens/manage/user_manage_screen.dart';
 import 'package:workgest/screens/weatherscreen.dart';
 
 class Home extends StatefulWidget {
@@ -38,8 +40,12 @@ class _HomeState extends State<Home>{
       ),
       Expanded(
           child: IconButton(
-              onPressed: null,
-              icon: Icon(
+            onPressed: (){
+              Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => SummerCamperManage())
+              );
+            },
+            icon: Icon(
                 Icons.list_rounded,
                 size: 40,
                 color: Colors.white,
@@ -63,7 +69,11 @@ class _HomeState extends State<Home>{
       ),
       Expanded(
           child: IconButton(
-              onPressed: null,
+              onPressed: (){
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => ActivityScreen())
+                );
+              },
               icon: Icon(
                 Icons.kayaking_rounded,
                 size: 40,

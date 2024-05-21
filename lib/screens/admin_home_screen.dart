@@ -34,12 +34,16 @@ class _UserAdminScreenState extends State<UserAdminScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue,
+        leading: Container(
+            padding: EdgeInsets.all(8),
+            child: Image.asset('assets/images/logo.png')
+        ),
         title: Text(
           titulo,
           style: TextStyle(
             color: Colors.white
           ),
-        ),
+        )
       ),
       body: Column(
         children: [

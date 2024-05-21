@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:workgest/objects/user_item.dart';
+import 'package:workgest/screens/firebaseactions/user/delete_user.dart';
 
 class UpdateUser extends StatefulWidget {
   final UserItem userItem;
@@ -72,38 +73,8 @@ class _UpdateUserState extends State<UpdateUser>{
                 showDialog(
                     context: context,
                     builder: (BuildContext context){
-                      return AlertDialog(
-                        title: Text('¿Desea borrar el usuario?'),
-                        actions: [
-                          TextButton(
-                            onPressed: (){
-                              FirebaseFirestore
-                                  .instance
-                                  .collection('usuarios')
-                                  .doc(widget.snapshot.id)
-                                  .delete();
-                              Navigator.of(context).pop();
-                            },
-                            child: Text(
-                              'Borrar',
-                              style: TextStyle(
-                                  fontSize: 20
-                              ),
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: (){
-                              Navigator.of(context).pop();
-                            },
-                            child: Text(
-                              'Cancelar',
-                              style: TextStyle(
-                                  fontSize: 20
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
+                      return DeleteUser(snapshot: widget.snapshot);
+
                     }
                 );
               },
@@ -156,7 +127,8 @@ class _UpdateUserState extends State<UpdateUser>{
                 controller: _nameFieldController,
                 focusNode: _focusName,
                 decoration: InputDecoration(
-                    border: OutlineInputBorder(
+                  labelText: 'Nombre',
+                  border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10)
                     ),
                 ),
@@ -166,6 +138,7 @@ class _UpdateUserState extends State<UpdateUser>{
                 controller: _apellidoFieldController,
                 focusNode: _focusApellido,
                 decoration: InputDecoration(
+                  labelText: 'Apellidos',
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10)
                   ),
@@ -176,6 +149,7 @@ class _UpdateUserState extends State<UpdateUser>{
                 controller: _emailFieldController,
                 focusNode: _focusEmail,
                 decoration: InputDecoration(
+                  labelText: 'Correo',
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10)
                   ),
