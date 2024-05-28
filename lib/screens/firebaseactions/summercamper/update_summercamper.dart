@@ -19,7 +19,7 @@ class _UpdateSummerCamperState extends State<UpdateSummerCamper>{
 
   late final TextEditingController _nameFieldController;
   late final TextEditingController _apellidoFieldController;
-  late final TextEditingController _monitorFieldController;
+  String? _selectedMonitor;
   late int _edad;
 
   late QueryDocumentSnapshot _snapshot;
@@ -28,12 +28,32 @@ class _UpdateSummerCamperState extends State<UpdateSummerCamper>{
   final FocusNode _focusApellido = FocusNode();
   final FocusNode _focusMonitor = FocusNode();
 
+  late Stream<QuerySnapshot> _usuariosStream;
+  late Stream<QuerySnapshot> _estudiantesStream;
+
+
+  static Stream<QuerySnapshot> getUsuarios()=>
+      FirebaseFirestore
+          .instance
+          .collection('usuarios')
+          .orderBy('rol')
+          .snapshots();
+
+  static Stream<QuerySnapshot> getEstudiantes()=>
+      FirebaseFirestore
+          .instance
+          .collection('estudiantes')
+          .orderBy('edad')
+          .snapshots();
+
   @override
   void initState() {
     super.initState();
     _nameFieldController = TextEditingController(text: widget.summerCamper.nombre);
     _apellidoFieldController = TextEditingController(text: widget.summerCamper.apellido);
-    _monitorFieldController = TextEditingController(text: widget.summerCamper.monitor);
+    _selectedMonitor = widget.summerCamper.monitor;
+    _usuariosStream = getUsuarios();
+    _estudiantesStream = getEstudiantes();
     _edad = widget.summerCamper.edad;
   }
 
@@ -41,14 +61,16 @@ class _UpdateSummerCamperState extends State<UpdateSummerCamper>{
   void dispose() {
     _nameFieldController.dispose();
     _apellidoFieldController.dispose();
-    _monitorFieldController.dispose();
     _focusName.dispose();
     _focusApellido.dispose();
-    _focusMonitor.dispose();
     super.dispose();
   }
 
+
+
   List<int> edades = [6,7,8,9,10,11,12,13,14,15,16,17,18];
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +108,7 @@ class _UpdateSummerCamperState extends State<UpdateSummerCamper>{
                   transaction.update(widget.snapshot.reference, {
                     "nombre": _nameFieldController.text,
                     "apellido": _apellidoFieldController.text,
-                    "monitor": _monitorFieldController.text,
+                    "monitor": _selectedMonitor,
                     "edad": _edad
                   });
                 });
@@ -140,31 +162,58 @@ class _UpdateSummerCamperState extends State<UpdateSummerCamper>{
                 ),
               ),
               SizedBox(height: 8),
-              TextField(
-                controller: _monitorFieldController,
-                focusNode: _focusMonitor,
-                decoration: InputDecoration(
-                  labelText: 'Monitor',
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10)
-                  ),
+              Container(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: _usuariosStream,
+                  builder: (context, usuarios){
+                    if (usuarios.hasError) {
+                      return CircularProgressIndicator();
+                    }
+                    if (usuarios.connectionState == ConnectionState.waiting) {
+                      return Container();
+                    }
+                    final data = usuarios.data!;
+                    List<String> monitores = [];
+                    for(int i = 0; i < data.docs.length; i++){
+                      if(data.docs[i]['rol'] == 'Estandard'){
+                        monitores.add(data.docs[i]['nombre'] + ' ' + data.docs[i]['apellido']);
+                      }
+                    }
+                    return DropdownButton<String>(
+                      value: _selectedMonitor,
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          _selectedMonitor = newValue;
+                        });
+                      },
+                      items: monitores.map((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                      hint: Text('Todos'),
+                    );
+                  },
                 ),
               ),
               SizedBox(height: 8),
-              DropdownButton<int>(
-                value: _edad,
-                onChanged: (int? newValue) {
-                  setState(() {
-                    _edad = newValue!;
-                  });
-                },
-                items: edades.map((int value) {
-                  return DropdownMenuItem<int>(
-                    value: value,
-                    child: Text('${value}'),
-                  );
-                }).toList(),
-                hint: Text('Edad'),
+              Container(
+                child: DropdownButton<int>(
+                  value: _edad,
+                  onChanged: (int? newValue) {
+                    setState(() {
+                      _edad = newValue!;
+                    });
+                  },
+                  items: edades.map((int value) {
+                    return DropdownMenuItem<int>(
+                      value: value,
+                      child: Text('${value}'),
+                    );
+                  }).toList(),
+                  hint: Text('Edad'),
+                ),
               ),
             ],
           ),

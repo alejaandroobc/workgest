@@ -21,7 +21,16 @@ class UserInformationScreen extends StatelessWidget{
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder(
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Mi usuario',
+          style: TextStyle(color: Colors.white),
+        ),
+        iconTheme: IconThemeData(color: Colors.white),
+        backgroundColor: Colors.blue,
+      ),
+    body: StreamBuilder(
         stream: getStream(),
         builder: (context, usuarios){
           if(usuarios.hasError){
@@ -131,7 +140,7 @@ class UserInformationScreen extends StatelessWidget{
             }
           }
           return CircularProgressIndicator();
-        }
+        })
     );
   }
 }

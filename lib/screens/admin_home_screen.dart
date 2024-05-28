@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
@@ -33,85 +34,57 @@ class _UserAdminScreenState extends State<UserAdminScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue,
-        leading: Container(
-            padding: EdgeInsets.all(8),
-            child: Image.asset('assets/images/logo.png')
-        ),
-        title: Text(
-          titulo,
-          style: TextStyle(
-            color: Colors.white
+          backgroundColor: Colors.blue,
+          leading: Container(
+              padding: EdgeInsets.all(8),
+              child: Image.asset('assets/images/logo.png')
           ),
-        )
+          title: Text(
+            titulo,
+            style: TextStyle(
+                color: Colors.white
+            ),
+          )
       ),
       body: Column(
         children: [
           if(_indexselected == 0)
             Expanded(child: UserInformationScreen(_user)),
           if(_indexselected == 1)
-          Expanded(
-              child:Home()
-          ),
-          if(_indexselected == 2)
-            Row(
+            Expanded(
+                child:Home(user: _user,)
+            ),
+          Container(
+            height: MediaQuery.of(context).size.height/10,
+            decoration: BoxDecoration(
+                color: Colors.blue
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(_user.displayName ?? 'Nombre no disponible'),
+                Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.home,
+                        color: Colors.white,
+                        size: 30,
+                      ),
+                      Text(
+                        'Home',
+                        style: TextStyle(
+                            color: Colors.white
+                        ),
+                      )
+                    ],
+                  ),
+                ),
               ],
-            )
+            ),
+          )
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-          backgroundColor: Colors.blue,
-          items: [
-            BottomNavigationBarItem(
-              icon: Icon(
-                Icons.account_circle,
-                color: Colors.white,
-              ),
-              label: 'User',
-
-            ),
-            BottomNavigationBarItem(
-                icon: Icon(
-                  Icons.home,
-                  color: Colors.white,
-                ),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-                icon: Icon(
-                  Icons.settings,
-                  color: Colors.white,
-                ),
-                label: 'Settings'
-            ),
-          ],
-        currentIndex: _indexselected,
-        onTap: _itemElegido,
-        selectedLabelStyle: TextStyle(
-          fontSize: 20,    // Tamaño de la fuente
-          fontWeight: FontWeight.normal,
-        ),
-      )
     );
   }
-
-  void _itemElegido(int index){
-    setState(() {
-      _indexselected = index;
-      switch(_indexselected){
-        case 0:
-          titulo= 'User';
-          break;
-        case 1:
-          titulo= 'Home';
-          break;
-        case 2:
-          titulo= 'Settings';
-          break;
-      }
-    });
-  }
 }
-

@@ -46,58 +46,55 @@ class _SummerCamperManageState extends State<SummerCamperManage>{
       appBar: AppBar(
         backgroundColor: Colors.blue,
         title: Text(
-          'Gestión de usuarios',
+          'Gestión de alumnos',
           style: TextStyle(color: Colors.white),
         ),
         iconTheme: IconThemeData(color: Colors.white),
       ),
       body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            padding: EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(5.0),
             child: Row(
               children: [
-                Container(
-                  padding: EdgeInsets.all(16.0),
-                  child: Row(
+                Expanded(
+                  child: Column(
                     children: [
-                      StreamBuilder<QuerySnapshot>(
-                        stream: _usuariosStream,
-                        builder: (context, usuarios){
-                          if (usuarios.hasError) {
-                            return CircularProgressIndicator();
-                          }
-                          final data = usuarios.data!;
-                          List<String> monitores = [];
-                          for(int i = 0; i < data.docs.length; i++){
-                            if(data.docs[i]['rol'] == 'Estandard'){
-                              monitores.add(data.docs[i]['nombre'] + ' ' + data.docs[i]['apellido']);
+                      Text('Filtra por monitor:'),
+                      Container(
+                        child: StreamBuilder<QuerySnapshot>(
+                          stream: _usuariosStream,
+                          builder: (context, usuarios){
+                            if (usuarios.hasError) {
+                              return CircularProgressIndicator();
                             }
-                          }
-                          monitores.add('Todos');
-                          return Column(
-                            children: [
-                              Container(
-                                child: DropdownButton<String>(
-                                  value: _selectedMonitor,
-                                  onChanged: (String? newValue) {
-                                    setState(() {
-                                      _selectedMonitor = newValue;
-                                    });
-                                  },
-                                  items: monitores.map((String value) {
-                                    return DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Text(value),
-                                    );
-                                  }).toList(),
-                                  hint: Text('Todos'),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
+                            if (usuarios.connectionState == ConnectionState.waiting) {
+                              return Container();
+                            }
+                            final data = usuarios.data!;
+                            List<String> monitores = [];
+                            for(int i = 0; i < data.docs.length; i++){
+                              if(data.docs[i]['rol'] == 'Estandard'){
+                                monitores.add(data.docs[i]['nombre'] + ' ' + data.docs[i]['apellido']);
+                              }
+                            }
+                            monitores.add('Todos');
+                            return DropdownButton<String>(
+                              value: _selectedMonitor,
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  _selectedMonitor = newValue;
+                                });
+                              },
+                              items: monitores.map((String value) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Text(value),
+                                );
+                              }).toList(),
+                            );
+                          },
+                        ),
                       ),
                     ],
                   ),
@@ -111,6 +108,9 @@ class _SummerCamperManageState extends State<SummerCamperManage>{
               builder: (context, estudiante) {
                 if (estudiante.hasError) {
                   return ConnectionError();
+                }
+                if (estudiante.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
                 }
                 if (estudiante.hasData) {
                   final data = estudiante.data!;

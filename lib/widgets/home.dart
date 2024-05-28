@@ -1,15 +1,28 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:workgest/screens/actividades_screen.dart';
+import 'package:workgest/screens/horario_screen.dart';
 import 'package:workgest/screens/manage/summercamper_manage_screen.dart';
 import 'package:workgest/screens/manage/user_manage_screen.dart';
+import 'package:workgest/screens/user_screen.dart';
 import 'package:workgest/screens/weatherscreen.dart';
 
 class Home extends StatefulWidget {
+  final User user;
 
+  Home({required this.user});
   @override
   _HomeState createState() => _HomeState();
 }
 class _HomeState extends State<Home>{
+  late User _user;
+
+  @override
+  void initState() {
+    super.initState();
+    _user = widget.user;
+  }
+
   @override
   Widget build(BuildContext context){
 
@@ -30,7 +43,11 @@ class _HomeState extends State<Home>{
       ),
       Expanded(
           child: IconButton(
-              onPressed: null,
+              onPressed: (){
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => HorarioScreen())
+                );
+              },
               icon: Icon(
                 Icons.calendar_month_outlined,
                 size: 40,
@@ -83,9 +100,13 @@ class _HomeState extends State<Home>{
       ),
       Expanded(
           child: IconButton(
-              onPressed: null,
+              onPressed: (){
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) =>UserInformationScreen(_user))
+                );
+              },
               icon: Icon(
-                Icons.location_on,
+                Icons.account_circle,
                 size: 40,
                 color: Colors.white,
               )
@@ -117,7 +138,7 @@ class _HomeState extends State<Home>{
     );
   }
 
-  Color _colorItem(int index){
+  Color? _colorItem(int index){
       switch(index){
         case 0:
           return Colors.red;
@@ -126,11 +147,11 @@ class _HomeState extends State<Home>{
         case 2:
           return Colors.orange;
         case 3:
-          return Colors.blueAccent;
-        case 4:
           return Colors.yellow;
+        case 4:
+          return Colors.blueAccent[100];
         case 5:
-          return Colors.purple;
+          return Colors.purple[200];
         default:
           return Colors.white;
       }
