@@ -1,12 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/widgets.dart';
-import 'package:workgest/screens/user_screen.dart';
 import 'package:workgest/widgets/home.dart';
 
-class UserAdminScreen extends StatefulWidget{
+class UserAdminScreen extends StatefulWidget {
   final User user;
 
   UserAdminScreen({required this.user});
@@ -17,9 +13,7 @@ class UserAdminScreen extends StatefulWidget{
 
 class _UserAdminScreenState extends State<UserAdminScreen> {
   late User _user;
-  int _indexselected=1;
-  String titulo= "Home";
-
+  final String _titulo = "Home";
 
   @override
   void initState() {
@@ -29,60 +23,40 @@ class _UserAdminScreenState extends State<UserAdminScreen> {
 
   @override
   Widget build(BuildContext context) {
-
-
+    double screenHeight = MediaQuery.of(context).size.height;
+    double iconSize = screenHeight * 0.05;
 
     return Scaffold(
       appBar: AppBar(
-          backgroundColor: Colors.blue,
-          leading: Container(
-              padding: EdgeInsets.all(8),
-              child: Image.asset('assets/images/logo.png')
-          ),
-          title: Text(
-            titulo,
-            style: TextStyle(
-                color: Colors.white
-            ),
-          )
+        backgroundColor: Colors.blue,
+        leading: Container(
+          padding: EdgeInsets.all(screenHeight * 0.01),
+          child: Image.asset('assets/images/logo.png'),
+        ),
+        title: Text(
+          _titulo,
+          style: const TextStyle(color: Colors.white),
+        ),
       ),
       body: Column(
         children: [
-          if(_indexselected == 0)
-            Expanded(child: UserInformationScreen(_user)),
-          if(_indexselected == 1)
-            Expanded(
-                child:Home(user: _user,)
-            ),
+          Expanded(
+            child: Home(user: _user),
+          ),
           Container(
-            height: MediaQuery.of(context).size.height/10,
-            decoration: BoxDecoration(
-                color: Colors.blue
-            ),
+            height: screenHeight /13,
+            decoration: const BoxDecoration(color: Colors.blue),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.home,
-                        color: Colors.white,
-                        size: 30,
-                      ),
-                      Text(
-                        'Home',
-                        style: TextStyle(
-                            color: Colors.white
-                        ),
-                      )
-                    ],
-                  ),
+                Icon(
+                  Icons.home,
+                  color: Colors.white,
+                  size: iconSize,
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );

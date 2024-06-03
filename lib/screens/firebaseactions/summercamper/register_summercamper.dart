@@ -1,203 +1,224 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:workgest/utils/firebase_auth.dart';
 
-class UserRegistration extends StatefulWidget{
+class SummerCamperRegistration extends StatefulWidget {
   @override
-  _UserRegistrationState createState () => _UserRegistrationState();
-
+  _SummerCamperRegistrationState createState() => _SummerCamperRegistrationState();
 }
 
-class _UserRegistrationState extends State<UserRegistration>{
+class _SummerCamperRegistrationState extends State<SummerCamperRegistration> {
+  late Stream<QuerySnapshot> _usuariosStream;
+  late Stream<QuerySnapshot> _estudiantesStream;
 
   final _nameFieldController = TextEditingController();
   final _apellidoFieldController = TextEditingController();
-  final _emailFieldController = TextEditingController();
-  final _passwordFieldController = TextEditingController();
-  late RadioOpciones _opcionRol = RadioOpciones.Estandard;
-
+  String? _selectedMonitor;
+  late int _edad;
 
   final _focusName = FocusNode();
   final _focusApellido = FocusNode();
-  final _focusEmail = FocusNode();
-  final _focusPassword = FocusNode();
 
   bool _processing = false;
+  String _statusMessage = "";
+
+  static Stream<QuerySnapshot> getUsuarios() =>
+      FirebaseFirestore.instance.collection('usuarios').orderBy('rol').snapshots();
+
+  static Stream<QuerySnapshot> getEstudiantes() =>
+      FirebaseFirestore.instance.collection('estudiantes').orderBy('edad').snapshots();
 
   @override
   void dispose() {
     _nameFieldController.dispose();
     _apellidoFieldController.dispose();
-    _emailFieldController.dispose();
     _focusName.dispose();
     _focusApellido.dispose();
-    _focusEmail.dispose();
     super.dispose();
+  }
+
+  List<int> edades = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
+
+  @override
+  void initState() {
+    super.initState();
+    _usuariosStream = getUsuarios();
+    _estudiantesStream = getEstudiantes();
+    _edad = edades[0];
+  }
+
+  Future<bool> _isStudentAlreadyRegistered(String nombre, String apellido, int edad) async {
+    final result = await FirebaseFirestore.instance
+        .collection('estudiantes')
+        .where('nombre', isEqualTo: nombre)
+        .where('apellido', isEqualTo: apellido)
+        .where('edad', isEqualTo: edad)
+        .get();
+    return result.docs.isNotEmpty;
   }
 
   @override
   Widget build(BuildContext context) {
+    double screenHeight = MediaQuery.of(context).size.height;
+    double padding = MediaQuery.of(context).size.width * 0.05;
+    double fontSize = MediaQuery.of(context).size.width * 0.04;
+    double paddingVertical = MediaQuery.of(context).size.width * 0.04;
+
     return GestureDetector(
-      onTap: (){
+      onTap: () {
         _focusName.unfocus();
         _focusApellido.unfocus();
-        _focusEmail.unfocus();
-        _focusPassword.unfocus();
       },
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.blue,
-          title: Text(
-            'Register',
-            style: TextStyle(
-                color: Colors.white
-            ),
+          title: const Text(
+            'Registra un Nuevo Alumno',
+            style: TextStyle(color: Colors.white),
           ),
-          iconTheme: IconThemeData(color: Colors.white),
+          iconTheme: const IconThemeData(color: Colors.white),
         ),
         body: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: EdgeInsets.all(padding),
             child: Center(
               child: Column(
                 children: [
-                  Text(
-                    'Registra un Nuevo Usuario',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
                   TextField(
                     controller: _nameFieldController,
                     focusNode: _focusName,
                     decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10)
-                        ),
-                        hintText: 'Nombre'
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(screenHeight * 0.025),
+                      ),
+                      hintText: 'Nombre',
                     ),
                   ),
-                  SizedBox(height: 8,),
+                  SizedBox(height: paddingVertical),
                   TextField(
                     controller: _apellidoFieldController,
                     focusNode: _focusApellido,
                     decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10)
-                        ),
-                        hintText: 'Apellido'
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(screenHeight * 0.025),
+                      ),
+                      hintText: 'Apellido',
                     ),
                   ),
-                  SizedBox(height: 8,),
-                  TextField(
-                    controller: _emailFieldController,
-                    focusNode: _focusEmail,
-                    decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10)
-                        ),
-                        hintText: 'Email'
-                    ),
-                  ),
-                  SizedBox(height: 8,),
-                  TextField(
-                    controller: _passwordFieldController,
-                    focusNode: _focusPassword,
-                    obscureText: true,
-                    decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10)
-                        ),
-                        hintText: 'Contraseña'
-                    ),
-                  ),
-                  SizedBox(height: 8,),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                          'Administrador',
-                          style: RadioOpciones.Administrador == _opcionRol
-                              ?TextStyle(color: Colors.green)
-                              :TextStyle(color: Colors.black)
-                      ),
-                      Radio(
-                          value: RadioOpciones.Administrador,
-                          groupValue: _opcionRol,
-                          activeColor: Colors.green,
-                          onChanged: (value){
-                            setState(() {
-                              _opcionRol = RadioOpciones.Administrador;
-          
-                            });
-                          }
-                      ),
-                      Text(
-                          'Estandard',
-                          style: RadioOpciones.Estandard == _opcionRol
-                              ?TextStyle(color: Colors.green)
-                              :TextStyle(color: Colors.black)
-                      ),
-                      Radio(
-                          value: RadioOpciones.Estandard,
-                          groupValue: _opcionRol,
-                          activeColor: Colors.green,
-                          onChanged: (value){
-                            setState(() {
-                              _opcionRol = RadioOpciones.Estandard;
-                            });
-                          }
-                      )
-                    ],
-                  ),
-                  SizedBox(height: 8,),
-                  _processing
-                      ? CircularProgressIndicator()
-                      :Padding(
-                    padding: EdgeInsets.all(20),
-                    child: ElevatedButton(
-                        onPressed: () async{
+                  SizedBox(height: paddingVertical),
+                  const Text('Monitor:'),
+                  SizedBox(height: paddingVertical),
+                  StreamBuilder<QuerySnapshot>(
+                    stream: _usuariosStream,
+                    builder: (context, usuarios) {
+                      if (usuarios.hasError || usuarios.connectionState == ConnectionState.waiting) {
+                        return const CircularProgressIndicator();
+                      }
+                      final data = usuarios.data!;
+                      List<String> monitores = [];
+                      for (int i = 0; i < data.docs.length; i++) {
+                        if (data.docs[i]['rol'] == 'Estandard') {
+                          monitores.add(data.docs[i]['nombre'] + ' ' + data.docs[i]['apellido']);
+                        }
+                      }
+                      return DropdownButton<String>(
+                        value: _selectedMonitor,
+                        onChanged: (String? newValue) {
                           setState(() {
-                            _processing = true;
+                            _selectedMonitor = newValue;
                           });
-          
-                          User? user = await FireAuth.singUpUsingEmailAndPass(
-                              name: _nameFieldController.text,
-                              email: _emailFieldController.text,
-                              password: _passwordFieldController.text
+                        },
+                        items: monitores.map((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
                           );
-          
-                          FirebaseFirestore
-                              .instance
-                              .collection('usuarios')
-                              .add({
-                            'nombre' : _nameFieldController.text,
-                            'apellido': _apellidoFieldController.text,
-                            'correo': _emailFieldController.text,
-                            'rol': _opcionRol.name
-                          });
-          
+                        }).toList(),
+                      );
+                    },
+                  ),
+                  SizedBox(height: paddingVertical),
+                  const Text('Edad:'),
+                  SizedBox(height: paddingVertical),
+                  DropdownButton<int>(
+                    value: _edad,
+                    onChanged: (int? newValue) {
+                      setState(() {
+                        _edad = newValue!;
+                      });
+                    },
+                    items: edades.map((int value) {
+                      return DropdownMenuItem<int>(
+                        value: value,
+                        child: Text('$value'),
+                      );
+                    }).toList(),
+                    hint: const Text('Edad'),
+                  ),
+                  SizedBox(height: paddingVertical),
+                  _processing
+                      ? const CircularProgressIndicator()
+                      : ElevatedButton(
+                    onPressed: () async {
+                      if (_nameFieldController.text.isEmpty ||
+                          _apellidoFieldController.text.isEmpty ||
+                          _selectedMonitor == null) {
+                        setState(() {
+                          _statusMessage = "Por favor complete todos los campos.";
+                        });
+                      } else {
+                        setState(() {
+                          _processing = true;
+                          _statusMessage = "";
+                        });
+
+                        bool studentExists = await _isStudentAlreadyRegistered(
+                            _nameFieldController.text,
+                            _apellidoFieldController.text,
+                            _edad);
+
+                        if (studentExists) {
                           setState(() {
+                            _statusMessage = "El estudiante ya está registrado.";
                             _processing = false;
                           });
-          
-                          if(user!= null){
-                            Text('Usuario registrado correctamente');
-                          }
-          
-                        },
-          
-                        child: Text(
-                          'Registrar Usuario',
-                          style: TextStyle(
-                              color: Colors.white
-                          ),
-                        ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        textStyle: TextStyle(color: Colors.white)
+                        } else {
+                          await FirebaseFirestore.instance.collection('estudiantes').add({
+                            'nombre': _nameFieldController.text,
+                            'apellido': _apellidoFieldController.text,
+                            'monitor': _selectedMonitor,
+                            'edad': _edad,
+                          });
+
+                          setState(() {
+                            _statusMessage = "Estudiante registrado correctamente.";
+                            _processing = false;
+                          });
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(screenHeight * 0.025),
                       ),
                     ),
-                  )
+                    child: Text(
+                      'Registrar Alumno',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: fontSize,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: paddingVertical),
+                  Text(
+                    _statusMessage,
+                    style: TextStyle(
+                      color: _statusMessage == "Estudiante registrado correctamente."
+                          ? Colors.green
+                          : Colors.red,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -206,9 +227,4 @@ class _UserRegistrationState extends State<UserRegistration>{
       ),
     );
   }
-}
-
-enum RadioOpciones{
-  Administrador,
-  Estandard
 }

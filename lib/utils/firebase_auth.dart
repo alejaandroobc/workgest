@@ -48,10 +48,8 @@ class FireAuth{
 
     }on FirebaseAuthException catch(e){
       if (e.code == 'weak-password'){
-        Text('Warning: Weak password');
-        print('Warning: Weak password');
+        const Text('Warning: Weak password');
       }else if (e.code == 'email-already-in-use'){
-        print('Error: Email already in use');
       }
     }catch (e){
       print(e);

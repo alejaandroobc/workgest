@@ -1,96 +1,143 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:workgest/objects/user_item.dart';
 import 'package:workgest/screens/firebaseactions/user/register_user.dart';
 import 'package:workgest/screens/firebaseactions/user/update_user.dart';
 
 import '../../error/conection_error.dart';
 
-class UserManage extends StatefulWidget{
-  @override
-  _UserManageState createState () => _UserManageState();
+class UserManage extends StatefulWidget {
+  final User user;
 
+  UserManage(this.user);
+
+  @override
+  _UserManageState createState() => _UserManageState();
 }
 
-class _UserManageState extends State<UserManage>{
+class _UserManageState extends State<UserManage> {
+  static Stream<QuerySnapshot> getStream() =>
+      FirebaseFirestore.instance.collection('usuarios').orderBy('rol').snapshots();
 
-  static Stream<QuerySnapshot> getStream()=>
-      FirebaseFirestore
-          .instance
-          .collection('usuarios')
-          .orderBy('rol')
-          .snapshots();
+  late String userRol = '';
+
+  @override
+  void initState() {
+    super.initState();
+    getStream().listen((snapshot) {
+      for (var doc in snapshot.docs) {
+        if (doc['correo'] == widget.user.email) {
+          setState(() {
+            userRol = doc['rol'];
+          });
+          break;
+        }
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
+    double paddingSize = screenWidth * 0.03;
+    double fontSizeLarge = screenHeight * 0.025;
+    double fontSizeSmall = screenHeight * 0.02;
+    double iconSize = screenHeight * 0.04;
+
     return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.blue,
-          title: Text(
-            'Gestión de usuarios',
-            style: TextStyle(
-                color: Colors.white
-            ),
-          ),
-          iconTheme: IconThemeData(color: Colors.white),
+      appBar: AppBar(
+        backgroundColor: Colors.blue,
+        title: Text(
+          'Gestión de usuarios',
+          style: TextStyle(color: Colors.white, fontSize: fontSizeLarge),
         ),
-        body: Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: getStream(),
-            builder: (context, usuarios) {
-              if (usuarios.hasError) {
-                return ConnectionError();
-              }
-              if (usuarios.hasData) {
-                final data = usuarios.data;
-                return ListView.builder(
-                  itemCount: usuarios.data!.docs.length,
-                  itemBuilder: (context, index) {
-                    String nombre = data?.docs[index]['nombre'];
-                    String apellido= data?.docs[index]['apellido'];
-                    String correo = data?.docs[index]['correo'];
-                    String rol = data?.docs[index]['rol'];
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: Expanded(
+        child: StreamBuilder<QuerySnapshot>(
+          stream: getStream(),
+          builder: (context, usuarios) {
+            if (usuarios.hasError) {
+              return ConnectionError();
+            }
+            if (usuarios.hasData) {
+              final data = usuarios.data;
+              return ListView.builder(
+                itemCount: usuarios.data!.docs.length,
+                itemBuilder: (context, index) {
+                  String nombre = data?.docs[index]['nombre'];
+                  String apellido = data?.docs[index]['apellido'];
+                  String correo = data?.docs[index]['correo'];
+                  String rol = data?.docs[index]['rol'];
+                  if (userRol == 'Administrador') {
                     return ListTile(
-                      leading: Icon(Icons.account_circle),
-                      title: Text('$nombre $apellido'),
-                      subtitle: Text(correo),
+                      leading: Icon(Icons.account_circle, size: iconSize),
+                      title: Text('$nombre $apellido', style: TextStyle(fontSize: fontSizeLarge)),
+                      subtitle: Text(correo, style: TextStyle(fontSize: fontSizeSmall)),
                       trailing: IconButton(
-                          onPressed: (){
-                            showDialog(
-                                barrierDismissible: false,
-                                context: context,
-                                builder: (BuildContext context){
-                                  return UpdateUser(UserItem(nombre, apellido, correo, rol), snapshot: data!.docs[index]);
-                                });
+                        onPressed: () {
+                          showDialog(
+                            barrierDismissible: false,
+                            context: context,
+                            builder: (BuildContext context) {
+                              return UpdateUser(
+                                UserItem(nombre, apellido, correo, rol),
+                                widget.user,
+                                snapshot: data!.docs[index],
+                                classID: 0,
+                              );
                             },
-                          icon: Icon(Icons.edit)
+                          );
+                        },
+                        icon: Icon(
+                            Icons.edit, size: iconSize
+                        ),
                       ),
                       tileColor: _colorTile(index),
                     );
-                    },
-                );
-              }
-              return Center(child: CircularProgressIndicator());
-              },
-          ),
+                  } else {
+                    return ListTile(
+                      leading: Icon(
+                          Icons.account_circle,
+                          size: iconSize
+                      ),
+                      title: Text('$nombre $apellido', style: TextStyle(fontSize: fontSizeLarge)),
+                      subtitle: Text(correo, style: TextStyle(fontSize: fontSizeSmall)),
+                      trailing: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('Rol:', style: TextStyle(fontSize: fontSizeSmall)),
+                          Text(rol, style: TextStyle(fontSize: fontSizeSmall)),
+                        ],
+                      ),
+                      tileColor: _colorTile(index),
+                    );
+                  }
+                },
+              );
+            }
+            return const Center(child: CircularProgressIndicator());
+          },
         ),
-      floatingActionButton: FloatingActionButton(
-        shape: CircleBorder(),
-        onPressed: () {
-          Navigator.of(context).push(MaterialPageRoute(builder: (context) => UserRegistration()));
-        },
-        child: Icon(Icons.add),
       ),
+      floatingActionButton: userRol == 'Administrador'
+          ? Padding(
+        padding: EdgeInsets.all(paddingSize),
+        child: FloatingActionButton(
+          shape: const CircleBorder(),
+          onPressed: () {
+            Navigator.of(context).push(MaterialPageRoute(builder: (context) => UserRegistration()));
+          },
+          child: Icon(Icons.add, size: iconSize),
+        ),
+      )
+          : null,
     );
   }
 
-  Color _colorTile(int index){
-    if(index%2==0){
-      return Colors.black12;
-    }else{
-      return Colors.white;
-    }
+  Color _colorTile(int index) {
+    return index % 2 == 0 ? Colors.black12 : Colors.white;
   }
-
 }

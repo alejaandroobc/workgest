@@ -5,27 +5,29 @@ import 'package:flutter/material.dart';
 import '../../../objects/user_item.dart';
 import 'delete_user.dart';
 
-class UpdateUser extends StatefulWidget {
+class UpdateMyUser extends StatefulWidget {
   final UserItem userItem;
   final QueryDocumentSnapshot snapshot;
   final int classID;
   final User user;
 
-  UpdateUser(this.userItem, this.user, {required this.snapshot, required this.classID});
+  UpdateMyUser(this.userItem, this.user, {required this.snapshot, required this.classID});
 
   @override
-  _UpdateUserState createState() => _UpdateUserState();
+  _UpdateMyUserState createState() => _UpdateMyUserState();
 }
 
-class _UpdateUserState extends State<UpdateUser> {
+class _UpdateMyUserState extends State<UpdateMyUser> {
   late final TextEditingController _nameFieldController;
   late final TextEditingController _apellidoFieldController;
   late final TextEditingController _emailFieldController;
+  late final TextEditingController _passwordFieldController; // Nuevo controlador para la contraseña
   late RadioOpciones _opcionRol;
 
   final FocusNode _focusName = FocusNode();
   final FocusNode _focusApellido = FocusNode();
   final FocusNode _focusEmail = FocusNode();
+  final FocusNode _focusPassword = FocusNode(); // Nuevo nodo de enfoque para la contraseña
 
   bool _processing = false;
   String _statusMessage = "";
@@ -36,6 +38,7 @@ class _UpdateUserState extends State<UpdateUser> {
     _nameFieldController = TextEditingController(text: widget.userItem.nombre);
     _apellidoFieldController = TextEditingController(text: widget.userItem.apellido);
     _emailFieldController = TextEditingController(text: widget.userItem.correo);
+    _passwordFieldController = TextEditingController(); // Inicializa el controlador de la contraseña
 
     if (widget.userItem.rol == 'Administrador') {
       _opcionRol = RadioOpciones.Administrador;
@@ -49,9 +52,11 @@ class _UpdateUserState extends State<UpdateUser> {
     _nameFieldController.dispose();
     _apellidoFieldController.dispose();
     _emailFieldController.dispose();
+    _passwordFieldController.dispose(); // Dispose del controlador de la contraseña
     _focusName.dispose();
     _focusApellido.dispose();
     _focusEmail.dispose();
+    _focusPassword.dispose(); // Dispose del nodo de enfoque de la contraseña
     super.dispose();
   }
 
@@ -60,10 +65,16 @@ class _UpdateUserState extends State<UpdateUser> {
     return regex.hasMatch(email);
   }
 
+  bool _isValidPassword(String password) {
+    final regex = RegExp(r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9]).{10,}$');
+    return regex.hasMatch(password);
+  }
+
   bool _validateFields() {
     if (_nameFieldController.text.isEmpty ||
         _apellidoFieldController.text.isEmpty ||
-        _emailFieldController.text.isEmpty) {
+        _emailFieldController.text.isEmpty ||
+        _passwordFieldController.text.isEmpty) {
       setState(() {
         _statusMessage = "Todos los campos son obligatorios.";
       });
@@ -73,6 +84,13 @@ class _UpdateUserState extends State<UpdateUser> {
     if (!_isValidEmail(_emailFieldController.text)) {
       setState(() {
         _statusMessage = "El correo electrónico no tiene un formato válido.";
+      });
+      return false;
+    }
+
+    if (!_isValidPassword(_passwordFieldController.text)) { // Valida la nueva contraseña
+      setState(() {
+        _statusMessage = "La contraseña debe tener al menos 10 caracteres, incluyendo mayúsculas, minúsculas y números.";
       });
       return false;
     }
@@ -87,6 +105,7 @@ class _UpdateUserState extends State<UpdateUser> {
         .get();
     return result.docs.isNotEmpty;
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -148,6 +167,8 @@ class _UpdateUserState extends State<UpdateUser> {
                 return;
               }
 
+              await widget.user.updateEmail(_emailFieldController.text);
+
               FirebaseFirestore.instance.runTransaction((transaction) async {
                 transaction.update(widget.snapshot.reference, {
                   "nombre": _nameFieldController.text,
@@ -157,7 +178,7 @@ class _UpdateUserState extends State<UpdateUser> {
                 });
               });
 
-              await widget.user.updateEmail(_emailFieldController.text);
+              await widget.user.updatePassword(_passwordFieldController.text);
 
               setState(() {
                 _processing = false;
@@ -182,7 +203,7 @@ class _UpdateUserState extends State<UpdateUser> {
           ),
         ],
         content: SingleChildScrollView(
-          child: SizedBox(
+          child: Container(
             width: dialogWidth,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,6 +236,18 @@ class _UpdateUserState extends State<UpdateUser> {
                   focusNode: _focusEmail,
                   decoration: InputDecoration(
                     labelText: 'Correo',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(screenHeight * 0.025),
+                    ),
+                  ),
+                ),
+                SizedBox(height: paddingVertical),
+                TextField(
+                  controller: _passwordFieldController,
+                  focusNode: _focusPassword,
+                  obscureText: true, // Oculta la contraseña
+                  decoration: InputDecoration(
+                    labelText: 'Nueva Contraseña', // Etiqueta para la nueva contraseña
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(screenHeight * 0.025),
                     ),
@@ -259,7 +292,6 @@ class _UpdateUserState extends State<UpdateUser> {
                       )
                     ],
                   ),
-                SizedBox(height: paddingVertical),
                 Text(
                   _statusMessage,
                   style: TextStyle(

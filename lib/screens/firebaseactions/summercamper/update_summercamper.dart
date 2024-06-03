@@ -1,22 +1,19 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:workgest/objects/summercamper_item.dart';
 import 'package:workgest/screens/firebaseactions/summercamper/delete_summercamper.dart';
-import 'package:workgest/screens/firebaseactions/user/delete_user.dart';
 
 class UpdateSummerCamper extends StatefulWidget {
   final SummerCamper summerCamper;
   final QueryDocumentSnapshot snapshot;
 
-  UpdateSummerCamper(this.summerCamper,{required this.snapshot});
+  UpdateSummerCamper(this.summerCamper, {required this.snapshot});
 
   @override
   _UpdateSummerCamperState createState() => _UpdateSummerCamperState();
 }
-class _UpdateSummerCamperState extends State<UpdateSummerCamper>{
 
+class _UpdateSummerCamperState extends State<UpdateSummerCamper> {
   late final TextEditingController _nameFieldController;
   late final TextEditingController _apellidoFieldController;
   String? _selectedMonitor;
@@ -26,25 +23,13 @@ class _UpdateSummerCamperState extends State<UpdateSummerCamper>{
 
   final FocusNode _focusName = FocusNode();
   final FocusNode _focusApellido = FocusNode();
-  final FocusNode _focusMonitor = FocusNode();
 
   late Stream<QuerySnapshot> _usuariosStream;
   late Stream<QuerySnapshot> _estudiantesStream;
 
+  static Stream<QuerySnapshot> getUsuarios() => FirebaseFirestore.instance.collection('usuarios').orderBy('rol').snapshots();
 
-  static Stream<QuerySnapshot> getUsuarios()=>
-      FirebaseFirestore
-          .instance
-          .collection('usuarios')
-          .orderBy('rol')
-          .snapshots();
-
-  static Stream<QuerySnapshot> getEstudiantes()=>
-      FirebaseFirestore
-          .instance
-          .collection('estudiantes')
-          .orderBy('edad')
-          .snapshots();
+  static Stream<QuerySnapshot> getEstudiantes() => FirebaseFirestore.instance.collection('estudiantes').orderBy('edad').snapshots();
 
   @override
   void initState() {
@@ -66,45 +51,81 @@ class _UpdateSummerCamperState extends State<UpdateSummerCamper>{
     super.dispose();
   }
 
+  List<int> edades = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
 
+  bool _validateFields() {
+    if (_nameFieldController.text.isEmpty || _apellidoFieldController.text.isEmpty) {
+      setState(() {
+        _statusMessage = "Todos los campos son obligatorios.";
+      });
+      return false;
+    }
+    return true;
+  }
 
-  List<int> edades = [6,7,8,9,10,11,12,13,14,15,16,17,18];
+  Future<bool> _isDuplicateSummerCamper(String nombre, String apellido, int edad) async {
+    final result = await FirebaseFirestore.instance
+        .collection('estudiantes')
+        .where('nombre', isEqualTo: nombre)
+        .where('apellido', isEqualTo: apellido)
+        .where('edad', isEqualTo: edad)
+        .get();
 
+    for (var doc in result.docs) {
+      if (doc.id != widget.snapshot.id) {
+        return true;
+      }
+    }
+    return false;
+  }
 
+  String _statusMessage = "";
 
   @override
   Widget build(BuildContext context) {
+    double screenHeight = MediaQuery.of(context).size.height;
+    double paddingVertical = MediaQuery.of(context).size.width * 0.04;
+    double paddingHorizontal = MediaQuery.of(context).size.width * 0.05;
+    double fontSize = MediaQuery.of(context).size.width * 0.04;
+    double iconSize = screenHeight * 0.04;
+
     return GestureDetector(
-      onTap: (){
+      onTap: () {
         _focusName.unfocus();
         _focusApellido.unfocus();
-        _focusMonitor.unfocus();
       },
       child: AlertDialog(
-        title: Text('Edita el alumno'),
-        contentPadding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
+        title: const Text('Edita el alumno'),
+        contentPadding: EdgeInsets.symmetric(horizontal: paddingHorizontal, vertical: paddingVertical),
         actions: [
           IconButton(
-              onPressed: (){
-                Navigator.of(context).pop(); // Cierra el primer AlertDialog
+              onPressed: () {
+                Navigator.of(context).pop();
                 showDialog(
                     context: context,
-                    builder: (BuildContext context){
+                    builder: (BuildContext context) {
                       return DeleteSummerCamper(snapshot: widget.snapshot);
-                    }
-                );
+                    });
               },
               icon: Icon(
                 Icons.delete,
-                size: 30,
-              )
-          ),
+                size: iconSize,
+              )),
           TextButton(
-              onPressed: (){
-                FirebaseFirestore
-                    .instance
-                    .runTransaction((transaction) async{
+              onPressed: () async {
+                if (!_validateFields()) {
+                  return;
+                }
 
+                bool isDuplicate = await _isDuplicateSummerCamper(_nameFieldController.text, _apellidoFieldController.text, _edad);
+                if (isDuplicate) {
+                  setState(() {
+                    _statusMessage = "El estudiante con el mismo nombre, apellido y edad ya está registrado.";
+                  });
+                  return;
+                }
+
+                FirebaseFirestore.instance.runTransaction((transaction) async {
                   transaction.update(widget.snapshot.reference, {
                     "nombre": _nameFieldController.text,
                     "apellido": _apellidoFieldController.text,
@@ -112,70 +133,62 @@ class _UpdateSummerCamperState extends State<UpdateSummerCamper>{
                     "edad": _edad
                   });
                 });
+
                 Navigator.of(context).pop();
               },
               child: Text(
                 'Editar',
-                style: TextStyle(
-                    fontSize: 20
-                ),
-              )
-          ),
+                style: TextStyle(fontSize: fontSize),
+              )),
           TextButton(
-              onPressed: (){
+              onPressed: () {
                 Navigator.of(context).pop();
               },
               child: Text(
                 'Cancelar',
-                style: TextStyle(
-                    fontSize: 20
-                ),
-              )
-          ),
+                style: TextStyle(fontSize: fontSize),
+              )),
         ],
-        content: Container(
-          width: MediaQuery.of(context).size.width * 0.8,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-
-                controller: _nameFieldController,
-                focusNode: _focusName,
-                decoration: InputDecoration(
-                  labelText: 'Nombre',
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10)
+        content: SingleChildScrollView(
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.8,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: _nameFieldController,
+                  focusNode: _focusName,
+                  decoration: InputDecoration(
+                    labelText: 'Nombre',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(screenHeight * 0.025)),
                   ),
                 ),
-              ),
-              SizedBox(height: 8),
-              TextField(
-                controller: _apellidoFieldController,
-                focusNode: _focusApellido,
-                decoration: InputDecoration(
-                  labelText: 'Apellidos',
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10)
+                SizedBox(height: paddingVertical),
+                TextField(
+                  controller: _apellidoFieldController,
+                  focusNode: _focusApellido,
+                  decoration: InputDecoration(
+                    labelText: 'Apellidos',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(screenHeight * 0.025)),
                   ),
                 ),
-              ),
-              SizedBox(height: 8),
-              Container(
-                child: StreamBuilder<QuerySnapshot>(
+                SizedBox(height: paddingVertical),
+                StreamBuilder<QuerySnapshot>(
                   stream: _usuariosStream,
-                  builder: (context, usuarios){
+                  builder: (context, usuarios) {
                     if (usuarios.hasError) {
-                      return CircularProgressIndicator();
+                      return const CircularProgressIndicator();
                     }
                     if (usuarios.connectionState == ConnectionState.waiting) {
                       return Container();
                     }
                     final data = usuarios.data!;
                     List<String> monitores = [];
-                    for(int i = 0; i < data.docs.length; i++){
-                      if(data.docs[i]['rol'] == 'Estandard'){
+                    for (int i = 0; i < data.docs.length; i++) {
+                      if (data.docs[i]['rol'] == 'Estandard') {
                         monitores.add(data.docs[i]['nombre'] + ' ' + data.docs[i]['apellido']);
                       }
                     }
@@ -192,14 +205,12 @@ class _UpdateSummerCamperState extends State<UpdateSummerCamper>{
                           child: Text(value),
                         );
                       }).toList(),
-                      hint: Text('Todos'),
+                      hint: const Text('Todos'),
                     );
                   },
                 ),
-              ),
-              SizedBox(height: 8),
-              Container(
-                child: DropdownButton<int>(
+                SizedBox(height: paddingVertical),
+                DropdownButton<int>(
                   value: _edad,
                   onChanged: (int? newValue) {
                     setState(() {
@@ -209,13 +220,22 @@ class _UpdateSummerCamperState extends State<UpdateSummerCamper>{
                   items: edades.map((int value) {
                     return DropdownMenuItem<int>(
                       value: value,
-                      child: Text('${value}'),
+                      child: Text('$value'),
                     );
                   }).toList(),
-                  hint: Text('Edad'),
+                  hint: const Text('Edad'),
                 ),
-              ),
-            ],
+                SizedBox(height: paddingVertical),
+                Text(
+                  _statusMessage,
+                  style: TextStyle(
+                    color: _statusMessage == "Usuario actualizado correctamente."
+                        ? Colors.green
+                        : Colors.red,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

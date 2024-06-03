@@ -3,16 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:workgest/screens/admin_home_screen.dart';
 import '../utils/firebase_auth.dart';
 
-class LoginScreen extends StatefulWidget{
-
+class LoginScreen extends StatefulWidget {
   @override
-  _LoginScreenState createState ()=> _LoginScreenState();
-
+  _LoginScreenState createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>{
-
-
+class _LoginScreenState extends State<LoginScreen> {
   final _emailFieldController = TextEditingController();
   final _passwordFieldController = TextEditingController();
 
@@ -20,6 +16,7 @@ class _LoginScreenState extends State<LoginScreen>{
   final _focusPassword = FocusNode();
 
   bool _processing = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -29,108 +26,121 @@ class _LoginScreenState extends State<LoginScreen>{
   }
 
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
+    double screenHeight = MediaQuery.of(context).size.height;
+    double screenWidth = MediaQuery.of(context).size.width;
+    double buttonWidth = screenWidth * 0.4;
+    double buttonHeight = screenHeight * 0.05;
+
     return GestureDetector(
-      onTap: (){
+      onTap: () {
         _focusEmail.unfocus();
         _focusPassword.unfocus();
-        },
+      },
       child: Scaffold(
         body: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               Icons.supervised_user_circle,
-              size: 100,
+              size: screenHeight * 0.1,
               color: Colors.blue,
             ),
             Text(
               'Inicio de Sesión',
-              style: Theme.of(context).textTheme.headlineMedium,
+              style: Theme.of(context).textTheme.titleLarge,
             ),
+            SizedBox(height: screenHeight * 0.02),
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+              padding: EdgeInsets.symmetric(vertical: screenHeight * 0.01, horizontal: screenWidth * 0.03),
               child: TextField(
                 controller: _emailFieldController,
                 focusNode: _focusEmail,
                 decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10)
-                    ),
-                    hintText: 'Email'
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(screenHeight * 0.02),
+                  ),
+                  hintText: 'Email',
                 ),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+              padding: EdgeInsets.symmetric(vertical: screenHeight * 0.01, horizontal: screenWidth * 0.03),
               child: TextField(
                 controller: _passwordFieldController,
                 focusNode: _focusPassword,
                 obscureText: true,
                 decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10)
-                    ),
-                    hintText: 'Contraseña'
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(screenHeight * 0.02),
+                  ),
+                  hintText: 'Contraseña',
                 ),
               ),
             ),
+            _errorMessage != null
+                ? Padding(
+              padding: EdgeInsets.symmetric(vertical: screenHeight * 0.01, horizontal: screenWidth * 0.03),
+              child: Text(
+                _errorMessage!,
+                style: const TextStyle(color: Colors.red),
+              ),
+            )
+                : Container(),
             _processing
-                ? CircularProgressIndicator()
-                : Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.4, // Utiliza el 80% del ancho de la pantalla
-                    height: MediaQuery.of(context).size.height * 0.05, // Utiliza el 80% del ancho de la pantalla
-                    child: ElevatedButton(
-                        onPressed: () async {
-                          _focusPassword.unfocus();
-                          _focusEmail.unfocus();
+                ? const CircularProgressIndicator()
+                : Padding(
+              padding: EdgeInsets.all(screenHeight * 0.01),
+              child: SizedBox(
+                width: buttonWidth,
+                height: buttonHeight,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    _focusPassword.unfocus();
+                    _focusEmail.unfocus();
 
-                          setState(() {
-                            _processing=true;
-                          });
+                    setState(() {
+                      _processing = true;
+                      _errorMessage = null; // Reset the error message
+                    });
 
-                          User? user = await FireAuth.singInUsingEmailAndPass(
-                              email: _emailFieldController.text,
-                              password: _passwordFieldController.text
-                          );
+                    User? user = await FireAuth.singInUsingEmailAndPass(
+                      email: _emailFieldController.text,
+                      password: _passwordFieldController.text,
+                    );
 
-                          setState(() {
-                            _processing= false;
-                          });
+                    setState(() {
+                      _processing = false;
+                    });
 
-                          if(user != null){
-                            Navigator.of(context).pushReplacement(
-                                MaterialPageRoute(
-                                    builder: (context) => UserAdminScreen(user: user)
-                                )
-                            );
-                          }
-
-                          },
-                        child: Text(
-                          'Login',
-                          style: TextStyle(
-                            fontSize: 20,
-                            color: Colors.white,
-
-                          ),
+                    if (user != null) {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (context) => UserAdminScreen(user: user),
                         ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25),
-                        ),
-                      ),
+                      );
+                    } else {
+                      setState(() {
+                        _errorMessage = 'Usuario o contraseña incorrectos';
+                      });
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(screenHeight * 0.025),
                     ),
                   ),
-                )
-              ],
-            )
+                  child: Text(
+                    'Login',
+                    style: TextStyle(
+                      fontSize: screenHeight * 0.025,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),

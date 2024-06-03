@@ -1,8 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-
-class DeleteSummerCamper extends StatefulWidget{
+class DeleteSummerCamper extends StatefulWidget {
   final QueryDocumentSnapshot snapshot;
 
   DeleteSummerCamper({required this.snapshot});
@@ -11,41 +10,53 @@ class DeleteSummerCamper extends StatefulWidget{
   _DeleteSummerCamperState createState() => _DeleteSummerCamperState();
 }
 
-class _DeleteSummerCamperState extends State<DeleteSummerCamper>{
+class _DeleteSummerCamperState extends State<DeleteSummerCamper> {
   @override
   Widget build(BuildContext context) {
+    double fontSize = MediaQuery.of(context).size.width * 0.04;
+    double dialogPadding = MediaQuery.of(context).size.width * 0.05;
+
     return AlertDialog(
-      title: Text('¿Desea borrar el alumno?'),
+      contentPadding: EdgeInsets.symmetric(horizontal: dialogPadding, vertical: dialogPadding),
+      title: Text(
+        '¿Desea borrar el alumno?',
+        style: TextStyle(fontSize: fontSize),
+      ),
       actions: [
         TextButton(
-          onPressed: (){
-            FirebaseFirestore
-                .instance
-                .collection('estudiantes')
-                .doc(widget.snapshot.id)
-                .delete();
-            Navigator.of(context).pop();
+          onPressed: () {
+            FirebaseFirestore.instance.collection('estudiantes').doc(widget.snapshot.id).delete().then((_) {
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Alumno borrado correctamente.'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            }).catchError((error) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Error al borrar el alumno.'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            });
           },
           child: Text(
             'Borrar',
-            style: TextStyle(
-                fontSize: 20
-            ),
+            style: TextStyle(fontSize: fontSize),
           ),
         ),
         TextButton(
-          onPressed: (){
+          onPressed: () {
             Navigator.of(context).pop();
           },
           child: Text(
             'Cancelar',
-            style: TextStyle(
-                fontSize: 20
-            ),
+            style: TextStyle(fontSize: fontSize),
           ),
         ),
       ],
     );
   }
-
 }

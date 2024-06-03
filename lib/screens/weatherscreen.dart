@@ -1,12 +1,6 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/widgets.dart';
 import 'package:weather/weather.dart';
 import 'package:weather_icons/weather_icons.dart';
-
-enum AppState { NOT_DOWNLOADED, DOWNLOADING, FINISHED_DOWNLOADING }
-
 
 class WeatherApp extends StatefulWidget {
   @override
@@ -14,250 +8,296 @@ class WeatherApp extends StatefulWidget {
 }
 
 class _WeatherAppState extends State<WeatherApp> {
+  final _ciudadFieldController = TextEditingController();
+  final _focusCiudad = FocusNode();
+  Future<List<Weather>>? _weatherFuture;
   WeatherFactory wf = WeatherFactory("2fde5dc70e99b88cae3a442e661f90a9");
+  String ciudad = 'Santa Pola';
+
+  @override
+  void dispose() {
+    _ciudadFieldController.dispose();
+    _focusCiudad.dispose();
+    super.dispose();
+  }
+
+  void _fetchWeather() {
+    setState(() {
+      ciudad = _ciudadFieldController.text;
+      _weatherFuture = wf.fiveDayForecastByCityName(ciudad);
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _weatherFuture = wf.fiveDayForecastByCityName(ciudad);
+  }
 
   @override
   Widget build(BuildContext context) {
-    Future<List<Weather>> getDatos() async {
-      return await wf.fiveDayForecastByCityName("Santa Pola");
-    }
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
+    double fontSizeLarge = screenHeight * 0.05;
+    double fontSizeMedium = screenHeight * 0.03;
+    double fontSizeSmall = screenHeight * 0.015;
+    double iconSizeLarge = screenHeight * 0.06;
+    double iconSizeMedium = screenHeight * 0.04;
+    double iconSizeSmall = screenHeight * 0.03;
+    double paddingSize = screenWidth * 0.02;
 
-    return FutureBuilder(
-      future: getDatos(),
-      builder: (context, snapshot) {
-        switch (snapshot.connectionState) {
-          case ConnectionState.none:
-          case ConnectionState.waiting:
-            return Center(child: CircularProgressIndicator());
-          default:
-            if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
-            } else {
-              List<Weather> weatherData = snapshot.data!;
-              return Scaffold(
-                appBar: AppBar(
-                  backgroundColor: Colors.blue,
-                  title: Text(
-                    'Weather',
-                    style: TextStyle(
-                        color: Colors.white
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.blue,
+        title: const Text(
+          'Weather',
+          style: TextStyle(color: Colors.white),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: Padding(
+        padding: EdgeInsets.all(paddingSize),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _ciudadFieldController,
+                    focusNode: _focusCiudad,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(screenWidth * 0.02),
+                      ),
+                      hintText: 'Ciudad',
                     ),
                   ),
-                  iconTheme: IconThemeData(color: Colors.white),
                 ),
-                body: Column(
-                  children: [
-                    Expanded(
-                      child: Card(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            color: Colors.blueAccent[100]
-                          ),
-                          width: double.infinity,
-                          child: Column(
-                            children: [
-                              Row(children: [
-                                Column(
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Text(
-                                          '${weatherData[0].temperature?.celsius?.toInt()}ºC',
-                                          style: TextStyle(
-                                              fontSize: 50,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white
-                                          ),
-                                        ),
-                                        Icon(
-                                          Icons.thermostat,
-                                          size: 50,
-                                          color: Colors.white,
-                                        ),
-                                      ],
+                IconButton(
+                  onPressed: () {
+                    _focusCiudad.unfocus();
+                    _fetchWeather();
+                  },
+                  icon: Icon(
+                    Icons.search,
+                    size: iconSizeMedium,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: paddingSize),
+            Expanded(
+              child: FutureBuilder<List<Weather>>(
+                future: _weatherFuture,
+                builder: (context, snapshot) {
+                  switch (snapshot.connectionState) {
+                    case ConnectionState.none:
+                    case ConnectionState.waiting:
+                      return const Center(child: CircularProgressIndicator());
+                    default:
+                      if (snapshot.hasError) {
+                        return const Center(child: Text('Error: La ciudad no existe o está mal escrita'));
+                      } else {
+                        List<Weather> weatherData = snapshot.data!;
+                        return LayoutBuilder(
+                          builder: (context, constraints) {
+                            double itemWidth = screenWidth / 4;
+                            double itemHeight = screenHeight / 5;
+
+                            return Column(
+                              children: [
+                                // Current Weather
+                                Card(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(screenWidth * 0.02),
+                                      color: Colors.blueAccent[100],
                                     ),
-                                    Row(
+                                    width: double.infinity,
+                                    padding: EdgeInsets.all(paddingSize),
+                                    child: Column(
                                       children: [
-                                        Text(
-                                          '${(weatherData[0].windSpeed!*3.6).toInt()}km/h',
-                                          style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize:25
-                                          ),
-                                        ),
-                                        Icon(
-                                          _windIconDirection(weatherData[0].windDegree),
-                                          color: Colors.white,
-                                          size: 25,
-                                        ),
-                                        Icon(
-                                          WeatherIcons.windy,
-                                          color: Colors.white,
-                                          size: 25,
-                                        )
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                Image(
-                                  image: NetworkImage(
-                                      "http://openweathermap.org/img/wn/${weatherData[0].weatherIcon}@4x.png"
-                                  ),
-                                ),
-                              ],),
-                              Expanded(
-                                child: ListView.builder(
-                                  itemCount: 8,
-                                  scrollDirection: Axis.horizontal,
-                                  itemBuilder: (context, index) {
-                                    return Padding(
-                                      padding: const EdgeInsets.all(0.2),
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(10), // Puedes ajustar el radio como desees
-                                          border: Border.all(
-                                              color: Colors.black,
-                                              width: 0.5
-                                          ),
-                                        ),
-                                        width: MediaQuery.of(context).size.width/4,
-                                        height: MediaQuery.of(context).size.height/5,
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          crossAxisAlignment: CrossAxisAlignment.center,
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: [
+                                            Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    Text(
+                                                      '${weatherData[0].temperature?.celsius?.toInt()}ºC',
+                                                      style: TextStyle(
+                                                        fontSize: fontSizeLarge,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                    Icon(
+                                                      Icons.thermostat,
+                                                      size: iconSizeLarge,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ],
+                                                ),
+                                                Row(
+                                                  children: [
+                                                    Text(
+                                                      '${(weatherData[0].windSpeed! * 3.6).toInt()}km/h',
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: fontSizeMedium,
+                                                      ),
+                                                    ),
+                                                    Icon(
+                                                      _windIconDirection(weatherData[0].windDegree),
+                                                      color: Colors.white,
+                                                      size: iconSizeMedium,
+                                                    ),
+                                                    Icon(
+                                                      WeatherIcons.windy,
+                                                      color: Colors.white,
+                                                      size: iconSizeMedium,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
                                             Image(
                                               image: NetworkImage(
-                                                  "http://openweathermap.org/img/wn/${weatherData[index].weatherIcon}@2x.png"
+                                                "http://openweathermap.org/img/wn/${weatherData[0].weatherIcon}@4x.png",
                                               ),
-                                            ),
-                                            Row(
-                                              children: [
-                                                Text(
-                                                  '${weatherData[index].temperature?.celsius?.toInt()}º',
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize:12
-                                                  ),
-                                                ),
-                                                Icon(
-                                                  Icons.thermostat,
-                                                  color: Colors.white,
-                                                  size: 12,
-                                                )
-                                              ],
-                                            ),
-                                            Row(
-                                              children: [
-                                                Text(
-                                                  '${(weatherData[index].windSpeed!*3.6).toInt()}km/h',
-                                                  style: TextStyle(
-                                                      color: Colors.white,
-                                                      fontSize:12
-                                                  ),
-                                                ),
-                                                Icon(
-                                                  _windIconDirection(weatherData[index].windDegree),
-                                                  color: Colors.white,
-                                                  size: 12,
-                                                ),
-                                                Icon(
-                                                  WeatherIcons.windy,
-                                                  color: Colors.white,
-                                                  size: 12,
-                                                )
-                                              ],
-                                            ),
-                                            Text(
-                                              '${weatherData[index].date?.hour}:${weatherData[index].date?.minute}${weatherData[index].date?.minute}',
-                                              style: TextStyle(
-                                                color: Colors.white
-                                              ),
+                                              width: itemWidth,
                                             ),
                                           ],
                                         ),
-                                      ),
-                                    );
-                                  }
-                                )
-                              )
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: weatherData.length,
-                        itemBuilder: (context, index) {
-                          Weather weather = weatherData[index];
-                          if(index==0){
-                            return SizedBox(height: 0);
-                          }else{
-                            if(index%7==0){
-                              return ListTile(
-                                tileColor: Colors.lightBlue[300],
-                                title: Text(
-                                  '${weather.date?.day}/${weather.date?.month}/${weather.date?.year}',
-                                  style: TextStyle(
-                                      color: Colors.white
+                                        SizedBox(height: paddingSize),
+                                        SizedBox(
+                                          height: itemHeight,
+                                          child: ListView.builder(
+                                            scrollDirection: Axis.horizontal,
+                                            itemCount: 8,
+                                            itemBuilder: (context, index) {
+                                              return Padding(
+                                                padding: EdgeInsets.all(paddingSize * 0.1),
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    borderRadius: BorderRadius.circular(screenWidth * 0.02),
+                                                    border: Border.all(
+                                                      color: Colors.black,
+                                                      width: screenWidth * 0.001,
+                                                    ),
+                                                  ),
+                                                  width: itemWidth,
+                                                  height: itemHeight,
+                                                  child: Column(
+                                                    mainAxisAlignment: MainAxisAlignment.center,
+                                                    children: [
+                                                      Image(
+                                                        image: NetworkImage(
+                                                          "http://openweathermap.org/img/wn/${weatherData[0].weatherIcon}@2x.png",
+                                                        ),
+                                                        width: itemWidth * 0.5,
+                                                      ),
+                                                      Text(
+                                                        '${weatherData[index].temperature?.celsius?.toInt()}º',
+                                                        style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontSize: fontSizeSmall,
+                                                        ),
+                                                      ),
+                                                      Text(
+                                                        '${(weatherData[index].windSpeed! * 3.6).toInt()}km/h',
+                                                        style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontSize: fontSizeSmall,
+                                                        ),
+                                                      ),
+                                                      Text(
+                                                        '${weatherData[index].date?.hour}:${weatherData[index].date?.minute.toString().padLeft(2,'0')}',
+                                                        style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontSize: fontSizeSmall,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                                subtitle: Row(
-                                  children: [
-                                    Text(
-                                      '${weatherData[index].temperature?.celsius?.toInt()}º',
-                                      style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize:15
-                                      ),
-                                    ),
-                                    Icon(
-                                      Icons.thermostat,
-                                      color: Colors.white,
-                                      size: 15,
-                                    ),
-                                    Text(
-                                      '${(weatherData[index].windSpeed!*3.6).toInt()}km/h',
-                                      style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize:15
-                                      ),
-                                    ),
-                                    Icon(
-                                      _windIconDirection(weatherData[index].windDegree),
-                                      color: Colors.white,
-                                      size: 15,
-                                    ),
-                                    Icon(
-                                      WeatherIcons.windy,
-                                      color: Colors.white,
-                                      size: 15,
-                                    )
-                                  ],
-                                ),
-                                trailing: Image(
-                                  image: NetworkImage(
-                                      "http://openweathermap.org/img/wn/${weatherData[index].weatherIcon}@4x.png"
+                                // Daily Weather
+                                Expanded(
+                                  child: ListView.builder(
+                                    itemCount: weatherData.length,
+                                    itemBuilder: (context, index) {
+                                      if (index % 7 == 0 && index != 0) {
+                                        return ListTile(
+                                          tileColor: Colors.lightBlue[300],
+                                          title: Text(
+                                            '${weatherData[index].date?.day}/${weatherData[index].date?.month}/${weatherData[index].date?.year}',
+                                            style: TextStyle(color: Colors.white, fontSize: fontSizeMedium),
+                                          ),
+                                          subtitle: Row(
+                                            children: [
+                                              Text(
+                                                '${weatherData[index].temperature?.celsius?.toInt()}º',
+                                                style: TextStyle(color: Colors.white, fontSize: fontSizeSmall),
+                                              ),
+                                              Icon(
+                                                Icons.thermostat,
+                                                color: Colors.white,
+                                                size: iconSizeSmall,
+                                              ),
+                                              Text(
+                                                '${(weatherData[index].windSpeed! * 3.6).toInt()}km/h',
+                                                style: TextStyle(color: Colors.white, fontSize: fontSizeSmall),
+                                              ),
+                                              Icon(
+                                                _windIconDirection(weatherData[index].windDegree),
+                                                color: Colors.white,
+                                                size: iconSizeSmall,
+                                              ),
+                                              Icon(
+                                                WeatherIcons.windy,
+                                                color: Colors.white,
+                                                size: iconSizeSmall,
+                                              ),
+                                            ],
+                                          ),
+                                          trailing: Image(
+                                            image: NetworkImage(
+                                              "http://openweathermap.org/img/wn/${weatherData[index].weatherIcon}@4x.png",
+                                            ),
+                                            width: itemWidth * 0.8,
+                                          ),
+                                        );
+                                      } else {
+                                        return const SizedBox.shrink();
+                                      }
+                                    },
                                   ),
                                 ),
-                              );
-                            }else{
-                              return SizedBox(height:0);
-                            }
-                          }
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
-        }
-      },
+                              ],
+                            );
+                          },
+                        );
+                      }
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
+
 
   IconData? _windIconDirection(grado){
     if(grado >= 22.5 && grado < 45){
