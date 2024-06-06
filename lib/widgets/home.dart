@@ -2,13 +2,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:workgest/screens/actividades_screen.dart';
+import 'package:workgest/screens/material_screen.dart';
 import 'package:workgest/screens/admin_home_screen.dart';
 import 'package:workgest/screens/horario_screen.dart';
 import 'package:workgest/screens/manage/summercamper_manage_screen.dart';
 import 'package:workgest/screens/manage/user_manage_screen.dart';
 import 'package:workgest/screens/user_screen.dart';
 import 'package:workgest/screens/weatherscreen.dart';
+import 'package:workgest/viewmodel/app_navegation.dart';
 
 class Home extends StatefulWidget {
   final User user;
@@ -46,7 +47,7 @@ class _HomeState extends State<Home>{
           Expanded(
             child: IconButton(
               onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) => UserManage(_user)));
+                AppNavigation.goToUserManage(context, _user);
               },
               icon: Icon(Icons.app_registration, size: iconSize, color: Colors.white),
             ),
@@ -62,10 +63,11 @@ class _HomeState extends State<Home>{
                 fontWeight: FontWeight.bold,
                 fontSize: fonSizeMedium
             ),
-          ),          Expanded(
+          ),
+          Expanded(
             child: IconButton(
               onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) => HorarioScreen(_user)));
+                AppNavigation.goToHorario(context, _user);
               },
               icon: Icon(Icons.calendar_month_outlined, size: iconSize, color: Colors.white),
             ),
@@ -85,7 +87,7 @@ class _HomeState extends State<Home>{
           Expanded(
             child: IconButton(
               onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) => SummerCamperManage(_user)));
+                AppNavigation.goToSummerCamperManage(context, _user);
               },
               icon: Icon(Icons.list_rounded, size: iconSize, color: Colors.white),
             ),
@@ -105,7 +107,7 @@ class _HomeState extends State<Home>{
           Expanded(
             child: IconButton(
               onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) => WeatherApp()));
+                AppNavigation.goToWeather(context);
               },
               icon: Icon(Icons.sunny, size: iconSize, color: Colors.white),
             ),
@@ -125,7 +127,7 @@ class _HomeState extends State<Home>{
           Expanded(
             child: IconButton(
               onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) => ActivityScreen(_user)));
+                AppNavigation.goToMaterial(context, _user);
               },
               icon: Icon(Icons.kayaking_rounded, size: iconSize, color: Colors.white),
             ),
@@ -145,7 +147,7 @@ class _HomeState extends State<Home>{
           Expanded(
             child: IconButton(
               onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) => UserInformationScreen(_user)));
+                AppNavigation.goToProfile(context, _user);
               },
               icon: Icon(Icons.account_circle, size: iconSize, color: Colors.white),
             ),

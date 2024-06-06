@@ -1,36 +1,38 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:workgest/model/firebase_datas.dart';
 
 import '../error/conection_error.dart';
+import '../viewmodel/user_viewmodel.dart';
 
-class ActivityScreen extends StatefulWidget {
+class MaterialScreen extends StatefulWidget {
   late final User user;
 
-  ActivityScreen(this.user);
+  MaterialScreen(this.user);
 
   @override
-  _ActivityScreenState createState() => _ActivityScreenState();
+  _MaterialScreenState createState() => _MaterialScreenState();
 }
 
-class _ActivityScreenState extends State<ActivityScreen> {
-  static Stream<QuerySnapshot> getStream() => FirebaseFirestore.instance.collection('material').snapshots();
+class _MaterialScreenState extends State<MaterialScreen> {
+  Stream<QuerySnapshot> _materialStream = FirebaseData.getStreamMaterial();
 
   late String userRol = '';
 
   @override
   void initState() {
     super.initState();
-    getStream().listen((snapshot) {
-      for (var doc in snapshot.docs) {
-        if (doc['correo'] == widget.user.email) {
-          setState(() {
-            userRol = doc['rol'];
-          });
-          break;
-        }
-      }
-    });
+    getActualUserRole();
+  }
+
+  void getActualUserRole() async {
+    String? role = await UserViewModel.getUserRole(widget.user);
+    if (role != null) {
+      setState(() {
+        userRol = role;
+      });
+    }
   }
 
   @override
@@ -53,7 +55,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
         backgroundColor: Colors.blue,
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: getStream(),
+        stream: _materialStream,
         builder: (context, material) {
           if (material.hasError) {
             return ConnectionError();
@@ -92,7 +94,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            userRol != 'Administrador'
+                            userRol == 'Administrador'
                                 ? IconButton(
                               onPressed: available > 0 ? () => actualizarDisponibilidad(docId, available, -1) : null,
                               icon: Icon(
@@ -109,7 +111,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                                 height: imageHeight,
                               ),
                             ),
-                            userRol != 'Administrador'
+                            userRol == 'Administrador'
                                 ? IconButton(
                               onPressed: () => actualizarDisponibilidad(docId, available, 1),
                               icon: Icon(

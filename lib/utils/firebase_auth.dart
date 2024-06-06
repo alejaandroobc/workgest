@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 
 class FireAuth{
 
-  static Future<User?> singInUsingEmailAndPass({
+  static Future<User?> signInUsingEmailAndPass({
     required String email,
     required String password,
   }) async{
@@ -27,7 +27,7 @@ class FireAuth{
     return user;
   }
 
-  static Future<User?> singUpUsingEmailAndPass({
+  static Future<User?> signUpUsingEmailAndPass({
     required String name,
     required String email,
     required String password

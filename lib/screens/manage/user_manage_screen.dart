@@ -1,11 +1,15 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:workgest/objects/user_item.dart';
+import 'package:workgest/model/firebase_datas.dart';
+import 'package:workgest/model/user_item.dart';
 import 'package:workgest/screens/firebaseactions/user/register_user.dart';
 import 'package:workgest/screens/firebaseactions/user/update_user.dart';
 
 import '../../error/conection_error.dart';
+import '../../viewmodel/user_viewmodel.dart';
 
 class UserManage extends StatefulWidget {
   final User user;
@@ -17,24 +21,23 @@ class UserManage extends StatefulWidget {
 }
 
 class _UserManageState extends State<UserManage> {
-  static Stream<QuerySnapshot> getStream() =>
-      FirebaseFirestore.instance.collection('usuarios').orderBy('rol').snapshots();
+  final Stream<QuerySnapshot> _usuariosStream = FirebaseData.getStreamUsuarios();
 
   late String userRol = '';
 
   @override
   void initState() {
     super.initState();
-    getStream().listen((snapshot) {
-      for (var doc in snapshot.docs) {
-        if (doc['correo'] == widget.user.email) {
-          setState(() {
-            userRol = doc['rol'];
-          });
-          break;
-        }
-      }
-    });
+    getActualUserRole();
+  }
+
+  void getActualUserRole() async {
+    String? role = await UserViewModel.getUserRole(widget.user);
+    if (role != null) {
+      setState(() {
+        userRol = role;
+      });
+    }
   }
 
   @override
@@ -57,7 +60,7 @@ class _UserManageState extends State<UserManage> {
       ),
       body: Expanded(
         child: StreamBuilder<QuerySnapshot>(
-          stream: getStream(),
+          stream: _usuariosStream,
           builder: (context, usuarios) {
             if (usuarios.hasError) {
               return ConnectionError();

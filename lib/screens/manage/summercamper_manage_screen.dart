@@ -2,10 +2,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:workgest/objects/summercamper_item.dart';
+import 'package:workgest/model/summercamper_item.dart';
 import 'package:workgest/screens/firebaseactions/summercamper/register_summercamper.dart';
 import 'package:workgest/screens/firebaseactions/summercamper/update_summercamper.dart';
+import 'package:workgest/viewmodel/app_navegation.dart';
+import 'package:workgest/viewmodel/summercamper_viewmodel.dart';
 import '../../error/conection_error.dart';
+import '../../model/firebase_datas.dart';
+import '../../viewmodel/user_viewmodel.dart';
+import '../lista_asistencia_screen.dart';
 
 class SummerCamperManage extends StatefulWidget {
   late final User user;
@@ -22,28 +27,24 @@ class _SummerCamperManageState extends State<SummerCamperManage> {
 
   String? _selectedMonitor = 'Todos';
   late String userRol = '';
-
-  static Stream<QuerySnapshot> getUsuarios() =>
-      FirebaseFirestore.instance.collection('usuarios').orderBy('rol').snapshots();
-
-  static Stream<QuerySnapshot> getEstudiantes() =>
-      FirebaseFirestore.instance.collection('estudiantes').orderBy('edad').snapshots();
+  late Future<List<String>> monitoresFuture;
 
   @override
   void initState() {
     super.initState();
-    _usuariosStream = getUsuarios();
-    _estudiantesStream = getEstudiantes();
-    _usuariosStream.listen((snapshot) {
-      for (var doc in snapshot.docs) {
-        if (doc['correo'] == widget.user.email) {
-          setState(() {
-            userRol = doc['rol'];
-          });
-          break;
-        }
-      }
-    });
+    _usuariosStream = FirebaseData.getStreamUsuarios();
+    _estudiantesStream = FirebaseData.getStreamAlumnos();
+    getActualUserRole();
+    monitoresFuture = SummerCamperViewModel().getMonitoresList();
+  }
+
+  void getActualUserRole() async {
+    String? role = await UserViewModel.getUserRole(widget.user);
+    if (role != null) {
+      setState(() {
+        userRol = role;
+      });
+    }
   }
 
   @override
@@ -75,37 +76,33 @@ class _SummerCamperManageState extends State<SummerCamperManage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Filtra por monitor:', style: TextStyle(fontSize: fontSizeSmall)),
-                      StreamBuilder<QuerySnapshot>(
-                        stream: _usuariosStream,
-                        builder: (context, usuarios) {
-                          if (usuarios.hasError) {
-                            return const CircularProgressIndicator();
-                          }
-                          if (usuarios.connectionState == ConnectionState.waiting) {
-                            return Container();
-                          }
-                          final data = usuarios.data!;
-                          List<String> monitores = [];
-                          for (int i = 0; i < data.docs.length; i++) {
-                            if (data.docs[i]['rol'] == 'Estandard') {
-                              monitores.add(data.docs[i]['nombre'] + ' ' + data.docs[i]['apellido']);
+                      FutureBuilder<List<String>>(
+                        future: monitoresFuture,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return CircularProgressIndicator();
+                          } else if (snapshot.hasError) {
+                            return Text('Error: ${snapshot.error}');
+                          } else {
+                            List<String> monitores = snapshot.data ?? [];
+                            if (!monitores.contains('Todos')) {
+                              monitores.add('Todos');
                             }
+                            return DropdownButton<String>(
+                              value: _selectedMonitor,
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  _selectedMonitor = newValue;
+                                });
+                              },
+                              items: monitores.map((String value) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Text(value, style: TextStyle(fontSize: fontSizeSmall)),
+                                );
+                              }).toList(),
+                            );
                           }
-                          monitores.add('Todos');
-                          return DropdownButton<String>(
-                            value: _selectedMonitor,
-                            onChanged: (String? newValue) {
-                              setState(() {
-                                _selectedMonitor = newValue;
-                              });
-                            },
-                            items: monitores.map((String value) {
-                              return DropdownMenuItem<String>(
-                                value: value,
-                                child: Text(value, style: TextStyle(fontSize: fontSizeSmall)),
-                              );
-                            }).toList(),
-                          );
                         },
                       ),
                     ],
@@ -116,7 +113,7 @@ class _SummerCamperManageState extends State<SummerCamperManage> {
           ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: getEstudiantes(),
+              stream: _estudiantesStream,
               builder: (context, estudiante) {
                 if (estudiante.hasError) {
                   return ConnectionError();
@@ -182,18 +179,31 @@ class _SummerCamperManageState extends State<SummerCamperManage> {
           ),
         ],
       ),
-      floatingActionButton: userRol == 'Administrador'
-          ? Padding(
+      floatingActionButton: Padding(
         padding: EdgeInsets.all(paddingSize),
-        child: FloatingActionButton(
-          shape: const CircleBorder(),
-          onPressed: () {
-            Navigator.of(context).push(MaterialPageRoute(builder: (context) => SummerCamperRegistration()));
-          },
-          child: Icon(Icons.add, size: iconSize),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (userRol == 'Administrador')
+              FloatingActionButton(
+                shape: const CircleBorder(),
+                onPressed: () {
+                  Navigator.of(context).push(MaterialPageRoute(builder: (context) => SummerCamperRegistration()));
+                },
+                child: Icon(Icons.add, size: iconSize),
+              ),
+            SizedBox(height: 10),
+            if (userRol == 'Administrador' || userRol == 'Estandard')
+              FloatingActionButton(
+                shape: const CircleBorder(),
+                onPressed: () {
+                  AppNavigation.goToListaAsistencia(context, widget.user);
+                },
+                child: Icon(Icons.check, size: iconSize),
+              ),
+          ],
         ),
-      )
-          : null,
+      ),
     );
   }
 

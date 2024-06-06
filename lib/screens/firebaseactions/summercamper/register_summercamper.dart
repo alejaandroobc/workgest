@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:workgest/viewmodel/summercamper_viewmodel.dart';
 
 class SummerCamperRegistration extends StatefulWidget {
   @override
@@ -9,6 +10,7 @@ class SummerCamperRegistration extends StatefulWidget {
 class _SummerCamperRegistrationState extends State<SummerCamperRegistration> {
   late Stream<QuerySnapshot> _usuariosStream;
   late Stream<QuerySnapshot> _estudiantesStream;
+  late QueryDocumentSnapshot _snapshot;
 
   final _nameFieldController = TextEditingController();
   final _apellidoFieldController = TextEditingController();
@@ -44,16 +46,6 @@ class _SummerCamperRegistrationState extends State<SummerCamperRegistration> {
     _usuariosStream = getUsuarios();
     _estudiantesStream = getEstudiantes();
     _edad = edades[0];
-  }
-
-  Future<bool> _isStudentAlreadyRegistered(String nombre, String apellido, int edad) async {
-    final result = await FirebaseFirestore.instance
-        .collection('estudiantes')
-        .where('nombre', isEqualTo: nombre)
-        .where('apellido', isEqualTo: apellido)
-        .where('edad', isEqualTo: edad)
-        .get();
-    return result.docs.isNotEmpty;
   }
 
   @override
@@ -159,19 +151,28 @@ class _SummerCamperRegistrationState extends State<SummerCamperRegistration> {
                       ? const CircularProgressIndicator()
                       : ElevatedButton(
                     onPressed: () async {
-                      if (_nameFieldController.text.isEmpty ||
-                          _apellidoFieldController.text.isEmpty ||
-                          _selectedMonitor == null) {
+                      String nombre = _nameFieldController.text;
+                      String apellido = _apellidoFieldController.text;
+                      String? monitor = _selectedMonitor;
+
+                      setState(() {
+                        _processing = true;
+                        _statusMessage = "";
+                      });
+
+                      if(!SummerCamperViewModel.validateFields(nombre,apellido,monitor)) {
                         setState(() {
-                          _statusMessage = "Por favor complete todos los campos.";
+                          _statusMessage=  SummerCamperViewModel.statusMessage;
+                          _processing = false;
                         });
-                      } else {
+                        return;
+                      }else {
                         setState(() {
                           _processing = true;
                           _statusMessage = "";
                         });
 
-                        bool studentExists = await _isStudentAlreadyRegistered(
+                        bool studentExists = await SummerCamperViewModel.isDuplicateSummerCamper(
                             _nameFieldController.text,
                             _apellidoFieldController.text,
                             _edad);

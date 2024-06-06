@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:weather/weather.dart';
 import 'package:weather_icons/weather_icons.dart';
+import '../viewmodel/weather_viewmodel.dart';
 
 class WeatherApp extends StatefulWidget {
   @override
@@ -10,9 +11,13 @@ class WeatherApp extends StatefulWidget {
 class _WeatherAppState extends State<WeatherApp> {
   final _ciudadFieldController = TextEditingController();
   final _focusCiudad = FocusNode();
-  Future<List<Weather>>? _weatherFuture;
-  WeatherFactory wf = WeatherFactory("2fde5dc70e99b88cae3a442e661f90a9");
-  String ciudad = 'Santa Pola';
+  late WeatherViewModel _weatherViewModel;
+
+  @override
+  void initState() {
+    super.initState();
+    _weatherViewModel = WeatherViewModel(WeatherFactory("2fde5dc70e99b88cae3a442e661f90a9"));
+  }
 
   @override
   void dispose() {
@@ -23,15 +28,8 @@ class _WeatherAppState extends State<WeatherApp> {
 
   void _fetchWeather() {
     setState(() {
-      ciudad = _ciudadFieldController.text;
-      _weatherFuture = wf.fiveDayForecastByCityName(ciudad);
+      _weatherViewModel.setCity(_ciudadFieldController.text);
     });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _weatherFuture = wf.fiveDayForecastByCityName(ciudad);
   }
 
   @override
@@ -88,7 +86,7 @@ class _WeatherAppState extends State<WeatherApp> {
             SizedBox(height: paddingSize),
             Expanded(
               child: FutureBuilder<List<Weather>>(
-                future: _weatherFuture,
+                future: _weatherViewModel.weatherFuture,
                 builder: (context, snapshot) {
                   switch (snapshot.connectionState) {
                     case ConnectionState.none:
@@ -297,8 +295,6 @@ class _WeatherAppState extends State<WeatherApp> {
       ),
     );
   }
-
-
   IconData? _windIconDirection(grado){
     if(grado >= 22.5 && grado < 45){
       return WeatherIcons.wind_deg_45;

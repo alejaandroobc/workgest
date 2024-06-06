@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:workgest/viewmodel/summercamper_viewmodel.dart';
 
 class DeleteSummerCamper extends StatefulWidget {
   final QueryDocumentSnapshot snapshot;
@@ -25,22 +26,7 @@ class _DeleteSummerCamperState extends State<DeleteSummerCamper> {
       actions: [
         TextButton(
           onPressed: () {
-            FirebaseFirestore.instance.collection('estudiantes').doc(widget.snapshot.id).delete().then((_) {
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Alumno borrado correctamente.'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            }).catchError((error) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Error al borrar el alumno.'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            });
+            SummerCamperViewModel.deleteStudent(widget.snapshot, context);
           },
           child: Text(
             'Borrar',

@@ -2,19 +2,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:workgest/error/conection_error.dart';
-import 'package:workgest/objects/user_item.dart';
+import 'package:workgest/model/user_item.dart';
 import 'package:workgest/screens/firebaseactions/user/update_myuser.dart';
 import 'package:workgest/screens/firebaseactions/user/update_user.dart';
 
-class UserInformationScreen extends StatelessWidget {
+import '../model/firebase_datas.dart';
+
+class MyProfileScreen extends StatelessWidget {
   final User user;
 
-  UserInformationScreen(this.user);
+  MyProfileScreen(this.user);
 
-  static Stream<QuerySnapshot> getStream() => FirebaseFirestore.instance
-      .collection('usuarios')
-      .orderBy('rol')
-      .snapshots();
+  late Stream<QuerySnapshot> _usuariosStream = FirebaseData.getStreamUsuarios();
+
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +35,7 @@ class UserInformationScreen extends StatelessWidget {
         backgroundColor: Colors.blue,
       ),
       body: StreamBuilder(
-        stream: getStream(),
+        stream: _usuariosStream,
         builder: (context, usuarios) {
           if (usuarios.hasError) {
             return ConnectionError();

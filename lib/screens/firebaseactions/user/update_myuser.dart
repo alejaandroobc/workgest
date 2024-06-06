@@ -2,7 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../../../objects/user_item.dart';
+import '../../../model/user_item.dart';
+import '../../../viewmodel/user_viewmodel.dart';
 import 'delete_user.dart';
 
 class UpdateMyUser extends StatefulWidget {
@@ -21,13 +22,16 @@ class _UpdateMyUserState extends State<UpdateMyUser> {
   late final TextEditingController _nameFieldController;
   late final TextEditingController _apellidoFieldController;
   late final TextEditingController _emailFieldController;
-  late final TextEditingController _passwordFieldController; // Nuevo controlador para la contraseña
+  late final TextEditingController _passwordFieldController1;
+  late final TextEditingController _passwordFieldController2;
+
   late RadioOpciones _opcionRol;
 
   final FocusNode _focusName = FocusNode();
   final FocusNode _focusApellido = FocusNode();
   final FocusNode _focusEmail = FocusNode();
-  final FocusNode _focusPassword = FocusNode(); // Nuevo nodo de enfoque para la contraseña
+  final FocusNode _focusPassword1 = FocusNode();
+  final FocusNode _focusPassword2 = FocusNode();
 
   bool _processing = false;
   String _statusMessage = "";
@@ -38,7 +42,8 @@ class _UpdateMyUserState extends State<UpdateMyUser> {
     _nameFieldController = TextEditingController(text: widget.userItem.nombre);
     _apellidoFieldController = TextEditingController(text: widget.userItem.apellido);
     _emailFieldController = TextEditingController(text: widget.userItem.correo);
-    _passwordFieldController = TextEditingController(); // Inicializa el controlador de la contraseña
+    _passwordFieldController1 = TextEditingController();
+    _passwordFieldController2 = TextEditingController();
 
     if (widget.userItem.rol == 'Administrador') {
       _opcionRol = RadioOpciones.Administrador;
@@ -52,60 +57,15 @@ class _UpdateMyUserState extends State<UpdateMyUser> {
     _nameFieldController.dispose();
     _apellidoFieldController.dispose();
     _emailFieldController.dispose();
-    _passwordFieldController.dispose(); // Dispose del controlador de la contraseña
+    _passwordFieldController1.dispose();
+    _passwordFieldController2.dispose();
     _focusName.dispose();
     _focusApellido.dispose();
     _focusEmail.dispose();
-    _focusPassword.dispose(); // Dispose del nodo de enfoque de la contraseña
+    _focusPassword1.dispose();
+    _focusPassword2.dispose();
     super.dispose();
   }
-
-  bool _isValidEmail(String email) {
-    final regex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-    return regex.hasMatch(email);
-  }
-
-  bool _isValidPassword(String password) {
-    final regex = RegExp(r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9]).{10,}$');
-    return regex.hasMatch(password);
-  }
-
-  bool _validateFields() {
-    if (_nameFieldController.text.isEmpty ||
-        _apellidoFieldController.text.isEmpty ||
-        _emailFieldController.text.isEmpty ||
-        _passwordFieldController.text.isEmpty) {
-      setState(() {
-        _statusMessage = "Todos los campos son obligatorios.";
-      });
-      return false;
-    }
-
-    if (!_isValidEmail(_emailFieldController.text)) {
-      setState(() {
-        _statusMessage = "El correo electrónico no tiene un formato válido.";
-      });
-      return false;
-    }
-
-    if (!_isValidPassword(_passwordFieldController.text)) { // Valida la nueva contraseña
-      setState(() {
-        _statusMessage = "La contraseña debe tener al menos 10 caracteres, incluyendo mayúsculas, minúsculas y números.";
-      });
-      return false;
-    }
-
-    return true;
-  }
-
-  Future<bool> _isEmailAlreadyRegistered(String email) async {
-    final result = await FirebaseFirestore.instance
-        .collection('usuarios')
-        .where('correo', isEqualTo: email)
-        .get();
-    return result.docs.isNotEmpty;
-  }
-
 
   @override
   Widget build(BuildContext context) {
@@ -121,11 +81,11 @@ class _UpdateMyUserState extends State<UpdateMyUser> {
         _focusName.unfocus();
         _focusApellido.unfocus();
         _focusEmail.unfocus();
+        _focusPassword1.unfocus();
+        _focusPassword2.unfocus();
       },
       child: AlertDialog(
-        title: const Text(
-          'Edita el usuario',
-        ),
+        title: const Text('Edita el usuario'),
         contentPadding: EdgeInsets.symmetric(horizontal: paddingHorizontal, vertical: paddingVertical),
         actions: [
           IconButton(
@@ -145,21 +105,28 @@ class _UpdateMyUserState extends State<UpdateMyUser> {
           ),
           TextButton(
             onPressed: () async {
+              String nombre= _nameFieldController.text;
+              String apellido= _apellidoFieldController.text;
+              String nuevoEmail = _emailFieldController.text;
+              String oldMonitorName = "${widget.userItem.nombre} ${widget.userItem.apellido}";
+              String newMonitorName = "${_nameFieldController.text} ${_apellidoFieldController.text}";
+
               setState(() {
                 _processing = true;
                 _statusMessage = "";
               });
 
-              if (!_validateFields()) {
+              if (!UserViewModel.validateFields(nombre, apellido, nuevoEmail, _passwordFieldController1.text)) {
                 setState(() {
+                  _statusMessage=  UserViewModel.statusMessage;
                   _processing = false;
                 });
                 return;
               }
 
-              bool emailExists = await _isEmailAlreadyRegistered(_emailFieldController.text);
+              bool emailExists = await UserViewModel.isEmailAlreadyRegistered(_emailFieldController.text);
 
-              if (emailExists && _emailFieldController.text != widget.userItem.correo) {
+              if (emailExists && nuevoEmail != widget.userItem.correo) {
                 setState(() {
                   _statusMessage = "El correo electrónico ya está registrado.";
                   _processing = false;
@@ -167,18 +134,29 @@ class _UpdateMyUserState extends State<UpdateMyUser> {
                 return;
               }
 
-              await widget.user.updateEmail(_emailFieldController.text);
+              if(widget.userItem.correo != nuevoEmail){
+                await widget.user.verifyBeforeUpdateEmail(nuevoEmail);
+              }
 
-              FirebaseFirestore.instance.runTransaction((transaction) async {
-                transaction.update(widget.snapshot.reference, {
-                  "nombre": _nameFieldController.text,
-                  "apellido": _apellidoFieldController.text,
-                  "correo": _emailFieldController.text,
-                  "rol": _opcionRol.name
+              UserViewModel.updateData(
+                  nombre: nombre,
+                  apellido: apellido,
+                  correo: nuevoEmail,
+                  rol: _opcionRol.name,
+                  oldMonitorName: oldMonitorName,
+                  newMonitorName: newMonitorName,
+                  snapshotReference: widget.snapshot.reference
+              );
+
+              if (_passwordFieldController1.text.isNotEmpty && _passwordFieldController1.text == _passwordFieldController2.text) {
+                await widget.user.updatePassword(_passwordFieldController1.text);
+              } else if (_passwordFieldController1.text != _passwordFieldController2.text) {
+                setState(() {
+                  _processing = false;
+                  _statusMessage = "Las contraseñas no coinciden.";
                 });
-              });
-
-              await widget.user.updatePassword(_passwordFieldController.text);
+                return;
+              }
 
               setState(() {
                 _processing = false;
@@ -186,6 +164,7 @@ class _UpdateMyUserState extends State<UpdateMyUser> {
               });
 
               Navigator.of(context).pop();
+
             },
             child: Text(
               'Editar',
@@ -243,11 +222,23 @@ class _UpdateMyUserState extends State<UpdateMyUser> {
                 ),
                 SizedBox(height: paddingVertical),
                 TextField(
-                  controller: _passwordFieldController,
-                  focusNode: _focusPassword,
-                  obscureText: true, // Oculta la contraseña
+                  controller: _passwordFieldController1,
+                  focusNode: _focusPassword1,
+                  obscureText: true,
                   decoration: InputDecoration(
-                    labelText: 'Nueva Contraseña', // Etiqueta para la nueva contraseña
+                    labelText: 'Nueva Contraseña',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(screenHeight * 0.025),
+                    ),
+                  ),
+                ),
+                SizedBox(height: paddingVertical),
+                TextField(
+                  controller: _passwordFieldController2,
+                  focusNode: _focusPassword2,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: 'Repite la nueva contraseña',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(screenHeight * 0.025),
                     ),

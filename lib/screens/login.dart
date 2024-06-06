@@ -101,10 +101,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     setState(() {
                       _processing = true;
-                      _errorMessage = null; // Reset the error message
+                      _errorMessage = null;
                     });
 
-                    User? user = await FireAuth.singInUsingEmailAndPass(
+                    User? user = await FireAuth.signInUsingEmailAndPass(
                       email: _emailFieldController.text,
                       password: _passwordFieldController.text,
                     );

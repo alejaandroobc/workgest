@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:workgest/viewmodel/user_viewmodel.dart';
 
 class DeleteUser extends StatefulWidget {
   final QueryDocumentSnapshot snapshot;
@@ -26,39 +27,7 @@ class _DeleteUserState extends State<DeleteUser> {
       actions: [
         TextButton(
           onPressed: () async {
-            try {
-              QuerySnapshot adminsSnapshot = await FirebaseFirestore.instance
-                  .collection('usuarios')
-                  .where('rol', isEqualTo: 'Administrador')
-                  .get();
-
-              if (adminsSnapshot.docs.length == 1 &&
-                  adminsSnapshot.docs.first.id == widget.snapshot.id) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("No se puede borrar. Eres el último administrador.")),
-                );
-              } else {
-                String? rol = widget.snapshot['rol'];
-
-                if (rol == 'Estandard') {
-                  await _deleteStudentsByMonitor('${widget.snapshot['nombre']} ${widget.snapshot['apellido']}');
-                }
-
-                await FirebaseFirestore.instance.collection('usuarios').doc(widget.snapshot.id).delete();
-
-                User? user = FirebaseAuth.instance.currentUser;
-                if (user != null) {
-                  await user.delete();
-                }
-
-                // Cierra el diálogo
-                Navigator.of(context).pop();
-              }
-            } catch (e) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Error eliminando el usuario")),
-              );
-            }
+            UserViewModel.deleteUser(widget.snapshot, context);
           },
           child: Text(
             'Borrar',
@@ -76,16 +45,5 @@ class _DeleteUserState extends State<DeleteUser> {
         ),
       ],
     );
-  }
-
-  Future<void> _deleteStudentsByMonitor(String monitorName) async {
-    QuerySnapshot studentsSnapshot = await FirebaseFirestore.instance
-        .collection('estudiantes')
-        .where('monitor', isEqualTo: monitorName)
-        .get();
-
-    for (QueryDocumentSnapshot studentSnapshot in studentsSnapshot.docs) {
-      await studentSnapshot.reference.delete();
-    }
   }
 }

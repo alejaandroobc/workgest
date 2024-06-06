@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:workgest/screens/login.dart';
 import 'package:workgest/widgets/home.dart';
 
 class UserAdminScreen extends StatefulWidget {
@@ -37,6 +38,32 @@ class _UserAdminScreenState extends State<UserAdminScreen> {
           _titulo,
           style: const TextStyle(color: Colors.white),
         ),
+        actions: [
+          PopupMenuButton(
+              icon: const Icon(
+                  Icons.more_vert,
+                  color: Colors.white
+              ),
+              itemBuilder: (BuildContext context) => [
+                PopupMenuItem<TextButton>(
+                  child: TextButton(
+                    onPressed: () {
+                      FirebaseAuth.instance.signOut();
+                      Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(builder: (context) => LoginScreen())
+                      );
+                    },
+                    child: const Text(
+                        'Sign Out',
+                      style: TextStyle(
+                        color: Colors.black
+                      ),
+                    ),
+                  ),
+                )
+              ]
+          )
+        ],
       ),
       body: Column(
         children: [

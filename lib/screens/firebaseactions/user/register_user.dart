@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:workgest/utils/firebase_auth.dart';
+import 'package:workgest/viewmodel/myviewmodel.dart';
+import 'package:workgest/viewmodel/user_viewmodel.dart';
 
 class UserRegistration extends StatefulWidget {
   @override
@@ -35,47 +37,6 @@ class _UserRegistrationState extends State<UserRegistration> {
     super.dispose();
   }
 
-  bool _validateFields() {
-    if (_nameFieldController.text.isEmpty ||
-        _apellidoFieldController.text.isEmpty ||
-        _emailFieldController.text.isEmpty ||
-        _passwordFieldController.text.isEmpty) {
-      setState(() {
-        _statusMessage = "Todos los campos son obligatorios.";
-      });
-      return false;
-    }
-
-    if (!_isValidEmail(_emailFieldController.text)) {
-      setState(() {
-        _statusMessage = "El correo electrónico no tiene un formato válido.";
-      });
-      return false;
-    }
-    if (_passwordFieldController.text.length < 10 ||
-        !_passwordFieldController.text.contains(RegExp(r'[A-Z]')) ||
-        !_passwordFieldController.text.contains(RegExp(r'[0-9]'))) {
-      setState(() {
-        _statusMessage = "La contraseña debe tener al menos 10 caracteres, incluyendo mayúsculas, minúsculas y números.";
-      });
-      return false;
-    }
-
-    return true;
-  }
-
-  Future<bool> _isEmailAlreadyRegistered(String email) async {
-    final result = await FirebaseFirestore.instance
-        .collection('usuarios')
-        .where('correo', isEqualTo: email)
-        .get();
-    return result.docs.isNotEmpty;
-  }
-
-  bool _isValidEmail(String email) {
-    final regex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-    return regex.hasMatch(email);
-  }
   @override
   Widget build(BuildContext context) {
     double screenHeight = MediaQuery.of(context).size.height;
@@ -190,19 +151,25 @@ class _UserRegistrationState extends State<UserRegistration> {
                     ? const CircularProgressIndicator()
                     : ElevatedButton(
                   onPressed: () async {
+                    String nombre= _nameFieldController.text;
+                    String apellido= _apellidoFieldController.text;
+                    String email = _emailFieldController.text;
+                    String password = _passwordFieldController.text;
+
                     setState(() {
                       _processing = true;
                       _statusMessage = "";
                     });
 
-                    if (!_validateFields()) {
+                    if (!UserViewModel.validateFields(nombre, apellido, email,password)) {
                       setState(() {
+                        _statusMessage=  UserViewModel.statusMessage;
                         _processing = false;
                       });
                       return;
                     }
 
-                    bool emailExists = await _isEmailAlreadyRegistered(_emailFieldController.text);
+                    bool emailExists = await UserViewModel.isEmailAlreadyRegistered(email);
 
                     if (emailExists) {
                       setState(() {
@@ -212,17 +179,17 @@ class _UserRegistrationState extends State<UserRegistration> {
                       return;
                     }
 
-                    User? user = await FireAuth.singUpUsingEmailAndPass(
-                      name: _nameFieldController.text,
-                      email: _emailFieldController.text,
-                      password: _passwordFieldController.text,
+                    User? user = await FireAuth.signUpUsingEmailAndPass(
+                      name: nombre,
+                      email: email,
+                      password: password,
                     );
 
                     if (user != null) {
                       await FirebaseFirestore.instance.collection('usuarios').add({
-                        'nombre': _nameFieldController.text,
-                        'apellido': _apellidoFieldController.text,
-                        'correo': _emailFieldController.text,
+                        'nombre': nombre,
+                        'apellido': apellido,
+                        'correo': email,
                         'rol': _opcionRol.name,
                       });
 
@@ -231,7 +198,7 @@ class _UserRegistrationState extends State<UserRegistration> {
                       });
                     } else {
                       setState(() {
-                        _statusMessage = "Error al registrar usuario. Intente nuevamente.";
+                        _statusMessage = "Error al registrar usuario. Vuelva a intentarlo.";
                       });
                     }
 

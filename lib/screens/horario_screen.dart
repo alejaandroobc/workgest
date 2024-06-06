@@ -22,6 +22,7 @@ class _HorarioScreenState extends State<HorarioScreen> {
   String? filepath;
   List<Color> _colorPalette = [];
   late String userRol = '';
+  bool _isLoading = true;
 
   static Stream<QuerySnapshot> getUsuarios() => FirebaseFirestore.instance.collection('usuarios').orderBy('rol').snapshots();
 
@@ -55,49 +56,7 @@ class _HorarioScreenState extends State<HorarioScreen> {
     super.dispose();
   }
 
-  void _generateColorPalette() {
-    _colorPalette = [
 
-      Colors.orange,
-      Colors.purple,
-      Colors.blue,
-      Colors.green,
-      Colors.red,
-      Colors.yellow,
-      Colors.teal,
-      Colors.indigo,
-      Colors.pink,
-      Colors.brown,
-    ];
-  }
-
-  Future<void> _loadFilepath() async {
-    FirebaseFirestore firestore = FirebaseFirestore.instance;
-    DocumentSnapshot doc = await firestore.collection('settings').doc('csv_filepath').get();
-    if (doc.exists) {
-      String? savedFilepath = doc['path'];
-      if (savedFilepath != null) {
-        setState(() {
-          filepath = savedFilepath;
-        });
-        _loadCSV();
-      }
-    }
-  }
-
-  Future<void> _loadCSV() async {
-    if (filepath == null) return;
-
-    final input = File(filepath!).openRead();
-    final fields = await input
-        .transform(utf8.decoder)
-        .transform(const CsvToListConverter())
-        .toList();
-
-    setState(() {
-      _data = fields;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -138,7 +97,8 @@ class _HorarioScreenState extends State<HorarioScreen> {
               ),
             ),
           ) : const SizedBox(),
-          Expanded(
+          _isLoading ? Center(child: CircularProgressIndicator(),)
+          : Expanded(
             child: ListView.builder(
               itemCount: _data.length,
               scrollDirection: Axis.vertical,
@@ -193,8 +153,52 @@ class _HorarioScreenState extends State<HorarioScreen> {
 
     setState(() {
       filepath = filePath;
+      _isLoading = false;
     });
 
     _loadCSV();
+  }
+  void _generateColorPalette() {
+    _colorPalette = [
+
+      Colors.orange,
+      Colors.purple,
+      Colors.blue,
+      Colors.green,
+      Colors.red,
+      Colors.yellow,
+      Colors.teal,
+      Colors.indigo,
+      Colors.pink,
+      Colors.brown,
+    ];
+  }
+
+  Future<void> _loadFilepath() async {
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+    DocumentSnapshot doc = await firestore.collection('settings').doc('csv_filepath').get();
+    if (doc.exists) {
+      String? savedFilepath = doc['path'];
+      if (savedFilepath != null) {
+        setState(() {
+          filepath = savedFilepath;
+        });
+        _loadCSV();
+      }
+    }
+  }
+
+  Future<void> _loadCSV() async {
+    if (filepath == null) return;
+
+    final input = File(filepath!).openRead();
+    final fields = await input
+        .transform(utf8.decoder)
+        .transform(const CsvToListConverter())
+        .toList();
+
+    setState(() {
+      _data = fields;
+    });
   }
 }

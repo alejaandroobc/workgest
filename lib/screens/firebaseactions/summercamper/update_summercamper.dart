@@ -1,7 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:workgest/objects/summercamper_item.dart';
+import 'package:workgest/model/firebase_datas.dart';
+import 'package:workgest/model/summercamper_item.dart';
 import 'package:workgest/screens/firebaseactions/summercamper/delete_summercamper.dart';
+import 'package:workgest/viewmodel/myviewmodel.dart';
+import 'package:workgest/viewmodel/summercamper_viewmodel.dart';
 
 class UpdateSummerCamper extends StatefulWidget {
   final SummerCamper summerCamper;
@@ -14,22 +17,23 @@ class UpdateSummerCamper extends StatefulWidget {
 }
 
 class _UpdateSummerCamperState extends State<UpdateSummerCamper> {
+
   late final TextEditingController _nameFieldController;
   late final TextEditingController _apellidoFieldController;
   String? _selectedMonitor;
   late int _edad;
 
-  late QueryDocumentSnapshot _snapshot;
-
   final FocusNode _focusName = FocusNode();
   final FocusNode _focusApellido = FocusNode();
+
+  late QueryDocumentSnapshot _snapshot;
 
   late Stream<QuerySnapshot> _usuariosStream;
   late Stream<QuerySnapshot> _estudiantesStream;
 
-  static Stream<QuerySnapshot> getUsuarios() => FirebaseFirestore.instance.collection('usuarios').orderBy('rol').snapshots();
-
-  static Stream<QuerySnapshot> getEstudiantes() => FirebaseFirestore.instance.collection('estudiantes').orderBy('edad').snapshots();
+  List<int> edades = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
+  bool _processing = false;
+  String _statusMessage = "";
 
   @override
   void initState() {
@@ -37,8 +41,8 @@ class _UpdateSummerCamperState extends State<UpdateSummerCamper> {
     _nameFieldController = TextEditingController(text: widget.summerCamper.nombre);
     _apellidoFieldController = TextEditingController(text: widget.summerCamper.apellido);
     _selectedMonitor = widget.summerCamper.monitor;
-    _usuariosStream = getUsuarios();
-    _estudiantesStream = getEstudiantes();
+    _usuariosStream = FirebaseData.getStreamUsuarios();
+    _estudiantesStream = FirebaseData.getStreamAlumnos();
     _edad = widget.summerCamper.edad;
   }
 
@@ -51,35 +55,6 @@ class _UpdateSummerCamperState extends State<UpdateSummerCamper> {
     super.dispose();
   }
 
-  List<int> edades = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
-
-  bool _validateFields() {
-    if (_nameFieldController.text.isEmpty || _apellidoFieldController.text.isEmpty) {
-      setState(() {
-        _statusMessage = "Todos los campos son obligatorios.";
-      });
-      return false;
-    }
-    return true;
-  }
-
-  Future<bool> _isDuplicateSummerCamper(String nombre, String apellido, int edad) async {
-    final result = await FirebaseFirestore.instance
-        .collection('estudiantes')
-        .where('nombre', isEqualTo: nombre)
-        .where('apellido', isEqualTo: apellido)
-        .where('edad', isEqualTo: edad)
-        .get();
-
-    for (var doc in result.docs) {
-      if (doc.id != widget.snapshot.id) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  String _statusMessage = "";
 
   @override
   Widget build(BuildContext context) {
@@ -113,11 +88,28 @@ class _UpdateSummerCamperState extends State<UpdateSummerCamper> {
               )),
           TextButton(
               onPressed: () async {
-                if (!_validateFields()) {
+                String nombre = _nameFieldController.text;
+                String apellido = _apellidoFieldController.text;
+                String? monitor = _selectedMonitor;
+
+                setState(() {
+                  _processing = true;
+                  _statusMessage = "";
+                });
+
+                if (!SummerCamperViewModel.validateFields(nombre,apellido,monitor)) {
+                  setState(() {
+                    _statusMessage=  SummerCamperViewModel.statusMessage;
+                    _processing = false;
+                  });
                   return;
                 }
 
-                bool isDuplicate = await _isDuplicateSummerCamper(_nameFieldController.text, _apellidoFieldController.text, _edad);
+                bool isDuplicate = await SummerCamperViewModel.isDuplicateSummerCamper(
+                    _nameFieldController.text,
+                    _apellidoFieldController.text,
+                    _edad
+                );
                 if (isDuplicate) {
                   setState(() {
                     _statusMessage = "El estudiante con el mismo nombre, apellido y edad ya está registrado.";

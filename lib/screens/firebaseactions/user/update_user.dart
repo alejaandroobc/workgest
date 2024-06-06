@@ -1,8 +1,12 @@
+import 'dart:ffi';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:workgest/viewmodel/myviewmodel.dart';
+import 'package:workgest/viewmodel/user_viewmodel.dart';
 
-import '../../../objects/user_item.dart';
+import '../../../model/user_item.dart';
 import 'delete_user.dart';
 
 class UpdateUser extends StatefulWidget {
@@ -55,38 +59,6 @@ class _UpdateUserState extends State<UpdateUser> {
     super.dispose();
   }
 
-  bool _isValidEmail(String email) {
-    final regex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-    return regex.hasMatch(email);
-  }
-
-  bool _validateFields() {
-    if (_nameFieldController.text.isEmpty ||
-        _apellidoFieldController.text.isEmpty ||
-        _emailFieldController.text.isEmpty) {
-      setState(() {
-        _statusMessage = "Todos los campos son obligatorios.";
-      });
-      return false;
-    }
-
-    if (!_isValidEmail(_emailFieldController.text)) {
-      setState(() {
-        _statusMessage = "El correo electrónico no tiene un formato válido.";
-      });
-      return false;
-    }
-
-    return true;
-  }
-
-  Future<bool> _isEmailAlreadyRegistered(String email) async {
-    final result = await FirebaseFirestore.instance
-        .collection('usuarios')
-        .where('correo', isEqualTo: email)
-        .get();
-    return result.docs.isNotEmpty;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -126,21 +98,29 @@ class _UpdateUserState extends State<UpdateUser> {
           ),
           TextButton(
             onPressed: () async {
+              String nombre= _nameFieldController.text;
+              String apellido= _apellidoFieldController.text;
+              String nuevoEmail = _emailFieldController.text;
+              String oldMonitorName = "${widget.userItem.nombre} ${widget.userItem.apellido}";
+              String newMonitorName = "${_nameFieldController.text} ${_apellidoFieldController.text}";
+
               setState(() {
                 _processing = true;
                 _statusMessage = "";
               });
 
-              if (!_validateFields()) {
+              if (!UserViewModel.validateFields(nombre,apellido,nuevoEmail,null)) {
                 setState(() {
+                  _statusMessage=  UserViewModel.statusMessage;
                   _processing = false;
                 });
                 return;
               }
 
-              bool emailExists = await _isEmailAlreadyRegistered(_emailFieldController.text);
 
-              if (emailExists && _emailFieldController.text != widget.userItem.correo) {
+              bool emailExists = await UserViewModel.isEmailAlreadyRegistered(_emailFieldController.text);
+
+              if (emailExists && nuevoEmail != widget.userItem.correo) {
                 setState(() {
                   _statusMessage = "El correo electrónico ya está registrado.";
                   _processing = false;
@@ -148,16 +128,21 @@ class _UpdateUserState extends State<UpdateUser> {
                 return;
               }
 
-              FirebaseFirestore.instance.runTransaction((transaction) async {
-                transaction.update(widget.snapshot.reference, {
-                  "nombre": _nameFieldController.text,
-                  "apellido": _apellidoFieldController.text,
-                  "correo": _emailFieldController.text,
-                  "rol": _opcionRol.name
-                });
-              });
 
-              await widget.user.updateEmail(_emailFieldController.text);
+
+              if(widget.userItem.correo != nuevoEmail){
+                await widget.user.verifyBeforeUpdateEmail(nuevoEmail);
+              }
+
+             UserViewModel.updateData(
+                 nombre: nombre,
+                 apellido: apellido,
+                 correo: nuevoEmail,
+                 rol: _opcionRol.name,
+                 oldMonitorName: oldMonitorName,
+                 newMonitorName: newMonitorName,
+                 snapshotReference: widget.snapshot.reference
+             );
 
               setState(() {
                 _processing = false;

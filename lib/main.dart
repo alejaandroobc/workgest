@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
       title: 'Authentication',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurpleAccent),
-        useMaterial3: true,m
+        useMaterial3: true,
       ),
       debugShowCheckedModeBanner: false,
       home: LoginScreen(),
