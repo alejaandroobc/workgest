@@ -74,7 +74,6 @@ class _UpdateMyUserState extends State<UpdateMyUser> {
     double paddingVertical = MediaQuery.of(context).size.width * 0.04;
     double paddingHorizontal = MediaQuery.of(context).size.width * 0.05;
     double fontSize = MediaQuery.of(context).size.width * 0.04;
-    double iconSize = screenHeight * 0.04;
 
     return GestureDetector(
       onTap: () {
@@ -88,21 +87,6 @@ class _UpdateMyUserState extends State<UpdateMyUser> {
         title: const Text('Edita el usuario'),
         contentPadding: EdgeInsets.symmetric(horizontal: paddingHorizontal, vertical: paddingVertical),
         actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return DeleteUser(snapshot: widget.snapshot);
-                },
-              );
-            },
-            icon: Icon(
-              Icons.delete,
-              size: iconSize,
-            ),
-          ),
           TextButton(
             onPressed: () async {
               String nombre= _nameFieldController.text;
@@ -182,7 +166,7 @@ class _UpdateMyUserState extends State<UpdateMyUser> {
           ),
         ],
         content: SingleChildScrollView(
-          child: Container(
+          child: SizedBox(
             width: dialogWidth,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

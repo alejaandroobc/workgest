@@ -25,10 +25,13 @@ class FirebaseData{
       .where('fecha', isEqualTo: Timestamp.fromDate(today))
       .get();
 
-  static getAsistenciaByDate(today) => FirebaseFirestore.instance
-      .collection('asistencias')
-      .where('fecha', isEqualTo: Timestamp.fromDate(today))
-      .get();
+  static Future<QuerySnapshot<Map<String, dynamic>>> getAsistenciaByDate(DateTime date) async {
+    // Fetch the snapshot from Firestore based on the date
+    return await FirebaseFirestore.instance
+        .collection('asistencias')
+        .where('fecha', isEqualTo: date)
+        .get();
+  }
 
   static getCSV() => FirebaseFirestore.instance.collection('settings').doc('csv_filepath').get();
 }

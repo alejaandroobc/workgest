@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:workgest/model/firebase_datas.dart';
+import 'package:workgest/model/firebase_data.dart';
 import 'package:workgest/model/summercamper_item.dart';
-import 'package:workgest/screens/firebaseactions/summercamper/delete_summercamper.dart';
-import 'package:workgest/viewmodel/myviewmodel.dart';
 import 'package:workgest/viewmodel/summercamper_viewmodel.dart';
+
+import 'delete_summercamper.dart';
 
 class UpdateSummerCamper extends StatefulWidget {
   final SummerCamper summerCamper;

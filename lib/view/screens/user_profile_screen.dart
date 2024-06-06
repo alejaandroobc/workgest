@@ -1,19 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:workgest/error/conection_error.dart';
 import 'package:workgest/model/user_item.dart';
-import 'package:workgest/screens/firebaseactions/user/update_myuser.dart';
-import 'package:workgest/screens/firebaseactions/user/update_user.dart';
 
-import '../model/firebase_datas.dart';
+import '../../model/firebase_data.dart';
+import '../firebaseactions/user/update_myuser.dart';
 
 class MyProfileScreen extends StatelessWidget {
   final User user;
 
   MyProfileScreen(this.user);
 
-  late Stream<QuerySnapshot> _usuariosStream = FirebaseData.getStreamUsuarios();
+  late final Stream<QuerySnapshot> _usuariosStream = FirebaseData.getStreamUsuarios();
 
 
   @override
@@ -38,7 +36,7 @@ class MyProfileScreen extends StatelessWidget {
         stream: _usuariosStream,
         builder: (context, usuarios) {
           if (usuarios.hasError) {
-            return ConnectionError();
+            return const Text('Error de conexión');
           }
           if (usuarios.hasData) {
             final data = usuarios.data;

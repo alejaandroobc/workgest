@@ -1,14 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:workgest/screens/material_screen.dart';
-import 'package:workgest/screens/horario_screen.dart';
-import 'package:workgest/screens/manage/summercamper_manage_screen.dart';
-import 'package:workgest/screens/manage/user_manage_screen.dart';
-import 'package:workgest/screens/user_screen.dart';
-import 'package:workgest/screens/weatherscreen.dart';
 
-import '../screens/lista_asistencia_screen.dart';
+import '../view/firebaseactions/alumnos/lista_asistencia_screen.dart';
+import '../view/screens/horario_screen.dart';
+import '../view/screens/material_screen.dart';
+import '../view/screens/summercamper_manage_screen.dart';
+import '../view/screens/user_manage_screen.dart';
+import '../view/screens/user_profile_screen.dart';
+import '../view/screens/weatherscreen.dart';
 
 class AppNavigation{
 

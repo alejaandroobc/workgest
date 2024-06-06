@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:workgest/model/firebase_datas.dart';
+import 'package:workgest/model/firebase_data.dart';
 import 'package:flutter/material.dart';
 
 class SummerCamperViewModel{

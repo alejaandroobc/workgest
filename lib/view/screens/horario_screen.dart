@@ -7,6 +7,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:http/http.dart' as http;
 
 class HorarioScreen extends StatefulWidget {
   late final User user;
@@ -56,8 +58,6 @@ class _HorarioScreenState extends State<HorarioScreen> {
     super.dispose();
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     double screenHeight = MediaQuery.of(context).size.height;
@@ -86,19 +86,19 @@ class _HorarioScreenState extends State<HorarioScreen> {
                   backgroundColor: Colors.blue,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(screenHeight * 0.025),
-                  )
-              ),
+                  )),
               child: Text(
                 'Subir CSV',
-                style: TextStyle(
-                  color: Colors.white,
-                    fontSize: fontSize
-                ),
+                style: TextStyle(color: Colors.white, fontSize: fontSize),
               ),
             ),
-          ) : const SizedBox(),
-          _isLoading ? Center(child: CircularProgressIndicator(),)
-          : Expanded(
+          )
+              : const SizedBox(),
+          _isLoading
+              ? const Center(
+            child: CircularProgressIndicator(),
+          )
+              : Expanded(
             child: ListView.builder(
               itemCount: _data.length,
               scrollDirection: Axis.vertical,
@@ -146,21 +146,27 @@ class _HorarioScreenState extends State<HorarioScreen> {
     final filePath = result.files.first.path;
     if (filePath == null) return;
 
+    File file = File(filePath);
+    FirebaseStorage storage = FirebaseStorage.instance;
+    String fileName = result.files.first.name;
+    TaskSnapshot uploadTask = await storage.ref('uploads/$fileName').putFile(file);
+
+    String downloadURL = await uploadTask.ref.getDownloadURL();
+
     FirebaseFirestore firestore = FirebaseFirestore.instance;
     await firestore.collection('settings').doc('csv_filepath').set({
-      'path': filePath,
+      'url': downloadURL,
     });
 
     setState(() {
       filepath = filePath;
-      _isLoading = false;
     });
 
-    _loadCSV();
+    _loadCSV(downloadURL);
   }
+
   void _generateColorPalette() {
     _colorPalette = [
-
       Colors.orange,
       Colors.purple,
       Colors.blue,
@@ -178,27 +184,20 @@ class _HorarioScreenState extends State<HorarioScreen> {
     FirebaseFirestore firestore = FirebaseFirestore.instance;
     DocumentSnapshot doc = await firestore.collection('settings').doc('csv_filepath').get();
     if (doc.exists) {
-      String? savedFilepath = doc['path'];
-      if (savedFilepath != null) {
-        setState(() {
-          filepath = savedFilepath;
-        });
-        _loadCSV();
+      String? downloadURL = doc['url'];
+      if (downloadURL != null) {
+        _loadCSV(downloadURL);
       }
     }
   }
 
-  Future<void> _loadCSV() async {
-    if (filepath == null) return;
-
-    final input = File(filepath!).openRead();
-    final fields = await input
-        .transform(utf8.decoder)
-        .transform(const CsvToListConverter())
-        .toList();
+  Future<void> _loadCSV(String url) async {
+    final response = await http.get(Uri.parse(url));
+    final fields = const CsvToListConverter().convert(utf8.decode(response.bodyBytes));
 
     setState(() {
       _data = fields;
+      _isLoading = false;
     });
   }
 }

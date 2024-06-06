@@ -1,12 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:workgest/model/firebase_datas.dart';
-import 'package:workgest/screens/manage/user_manage_screen.dart';
+import 'package:workgest/model/firebase_data.dart';
 import 'package:workgest/viewmodel/summercamper_viewmodel.dart';
 
-import '../viewmodel/user_viewmodel.dart';
+import '../../../viewmodel/user_viewmodel.dart';
 
 class ListaAsistencia extends StatefulWidget {
   final User user;
@@ -57,7 +55,8 @@ class _ListaAsistenciaState extends State<ListaAsistencia> {
   void _loadAttendanceStatus() async {
     final today = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
 
-    final snapshot = FirebaseData.getAsistenciaByDate(today);
+    // Await the Future<QuerySnapshot> to get the actual QuerySnapshot
+    final snapshot = await FirebaseData.getAsistenciaByDate(today);
 
     setState(() {
       for (var doc in snapshot.docs) {

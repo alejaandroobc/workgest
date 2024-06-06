@@ -1,8 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:workgest/utils/firebase_auth.dart';
-import 'package:workgest/viewmodel/myviewmodel.dart';
+import 'package:workgest/model/firebase_auth.dart';
 import 'package:workgest/viewmodel/user_viewmodel.dart';
 
 class UserRegistration extends StatefulWidget {
@@ -118,7 +117,9 @@ class _UserRegistrationState extends State<UserRegistration> {
                   children: [
                     Text(
                       'Administrador',
-                      style: _opcionRol == RadioOpciones.Administrador ? TextStyle(color: Colors.green) : TextStyle(color: Colors.black),
+                      style: _opcionRol == RadioOpciones.Administrador
+                          ? const TextStyle(color: Colors.green)
+                          : const TextStyle(color: Colors.black),
                     ),
                     Radio(
                       value: RadioOpciones.Administrador,
@@ -132,7 +133,9 @@ class _UserRegistrationState extends State<UserRegistration> {
                     ),
                     Text(
                       'Estandard',
-                      style: _opcionRol == RadioOpciones.Estandard ? TextStyle(color: Colors.green) : TextStyle(color: Colors.black),
+                      style: _opcionRol == RadioOpciones.Estandard
+                          ? const TextStyle(color: Colors.green)
+                          : const TextStyle(color: Colors.black),
                     ),
                     Radio(
                       value: RadioOpciones.Estandard,

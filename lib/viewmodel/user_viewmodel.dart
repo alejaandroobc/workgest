@@ -1,8 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:workgest/model/firebase_datas.dart';
-import 'package:workgest/viewmodel/myviewmodel.dart';
+import 'package:workgest/model/firebase_data.dart';
 
 class UserViewModel {
   static String _statusMessage = "";
@@ -116,7 +115,7 @@ class UserViewModel {
       return false;
     }
 
-    if (!MyViewModel.isValidEmail(email)) {
+    if (isValidEmail(email)) {
       _statusMessage = "El correo electrónico no tiene un formato válido.";
       return false;
     }
@@ -133,5 +132,11 @@ class UserViewModel {
     _statusMessage = "";
     return true;
   }
+
+  static bool isValidEmail(String email) {
+    final regex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+    return regex.hasMatch(email);
+  }
+
 }
 

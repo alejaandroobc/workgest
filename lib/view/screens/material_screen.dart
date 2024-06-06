@@ -1,10 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:workgest/model/firebase_datas.dart';
+import 'package:workgest/model/firebase_data.dart';
 
-import '../error/conection_error.dart';
-import '../viewmodel/user_viewmodel.dart';
+import '../../viewmodel/user_viewmodel.dart';
 
 class MaterialScreen extends StatefulWidget {
   late final User user;
@@ -58,7 +57,7 @@ class _MaterialScreenState extends State<MaterialScreen> {
         stream: _materialStream,
         builder: (context, material) {
           if (material.hasError) {
-            return ConnectionError();
+            return const Text('Error de conexión');
           }
 
           if (material.hasData) {

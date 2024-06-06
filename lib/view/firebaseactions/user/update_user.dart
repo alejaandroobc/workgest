@@ -1,9 +1,6 @@
-import 'dart:ffi';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:workgest/viewmodel/myviewmodel.dart';
 import 'package:workgest/viewmodel/user_viewmodel.dart';
 
 import '../../../model/user_item.dart';
@@ -31,9 +28,7 @@ class _UpdateUserState extends State<UpdateUser> {
   final FocusNode _focusApellido = FocusNode();
   final FocusNode _focusEmail = FocusNode();
 
-  bool _processing = false;
   String _statusMessage = "";
-
   @override
   void initState() {
     super.initState();
@@ -62,6 +57,7 @@ class _UpdateUserState extends State<UpdateUser> {
 
   @override
   Widget build(BuildContext context) {
+    String oldEmail= widget.userItem.correo;
     double screenHeight = MediaQuery.of(context).size.height;
     double dialogWidth = MediaQuery.of(context).size.width * 0.8;
     double paddingVertical = MediaQuery.of(context).size.width * 0.04;
@@ -81,21 +77,22 @@ class _UpdateUserState extends State<UpdateUser> {
         ),
         contentPadding: EdgeInsets.symmetric(horizontal: paddingHorizontal, vertical: paddingVertical),
         actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return DeleteUser(snapshot: widget.snapshot);
-                },
-              );
-            },
-            icon: Icon(
-              Icons.delete,
-              size: iconSize,
+          if (widget.classID != 1 && oldEmail != widget.user.email)
+            IconButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return DeleteUser(snapshot: widget.snapshot);
+                  },
+                );
+              },
+              icon: Icon(
+                Icons.delete,
+                size: iconSize,
+              ),
             ),
-          ),
           TextButton(
             onPressed: () async {
               String nombre= _nameFieldController.text;
@@ -105,14 +102,12 @@ class _UpdateUserState extends State<UpdateUser> {
               String newMonitorName = "${_nameFieldController.text} ${_apellidoFieldController.text}";
 
               setState(() {
-                _processing = true;
                 _statusMessage = "";
               });
 
               if (!UserViewModel.validateFields(nombre,apellido,nuevoEmail,null)) {
                 setState(() {
                   _statusMessage=  UserViewModel.statusMessage;
-                  _processing = false;
                 });
                 return;
               }
@@ -123,12 +118,9 @@ class _UpdateUserState extends State<UpdateUser> {
               if (emailExists && nuevoEmail != widget.userItem.correo) {
                 setState(() {
                   _statusMessage = "El correo electrónico ya está registrado.";
-                  _processing = false;
                 });
                 return;
               }
-
-
 
               if(widget.userItem.correo != nuevoEmail){
                 await widget.user.verifyBeforeUpdateEmail(nuevoEmail);
@@ -145,7 +137,6 @@ class _UpdateUserState extends State<UpdateUser> {
              );
 
               setState(() {
-                _processing = false;
                 _statusMessage = "Usuario actualizado correctamente.";
               });
 
@@ -206,7 +197,7 @@ class _UpdateUserState extends State<UpdateUser> {
                   ),
                 ),
                 SizedBox(height: paddingVertical),
-                if (widget.classID != 1 && _emailFieldController.text != widget.user.email)
+                if (widget.classID != 1 && oldEmail != widget.user.email)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

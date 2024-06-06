@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:weather/weather.dart';
 import 'package:weather_icons/weather_icons.dart';
-import '../viewmodel/weather_viewmodel.dart';
+import '../../viewmodel/weather_viewmodel.dart';
 
 class WeatherApp extends StatefulWidget {
   @override

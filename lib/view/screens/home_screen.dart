@@ -1,7 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:workgest/screens/login.dart';
-import 'package:workgest/widgets/home.dart';
+import 'package:workgest/view/widgets/home.dart';
+
+import 'login.dart';
 
 class UserAdminScreen extends StatefulWidget {
   final User user;

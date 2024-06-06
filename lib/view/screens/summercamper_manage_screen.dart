@@ -3,14 +3,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:workgest/model/summercamper_item.dart';
-import 'package:workgest/screens/firebaseactions/summercamper/register_summercamper.dart';
-import 'package:workgest/screens/firebaseactions/summercamper/update_summercamper.dart';
 import 'package:workgest/viewmodel/app_navegation.dart';
 import 'package:workgest/viewmodel/summercamper_viewmodel.dart';
-import '../../error/conection_error.dart';
-import '../../model/firebase_datas.dart';
+import '../../model/firebase_data.dart';
 import '../../viewmodel/user_viewmodel.dart';
-import '../lista_asistencia_screen.dart';
+import '../firebaseactions/alumnos/register_summercamper.dart';
+import '../firebaseactions/alumnos/update_summercamper.dart';
 
 class SummerCamperManage extends StatefulWidget {
   late final User user;
@@ -76,33 +74,37 @@ class _SummerCamperManageState extends State<SummerCamperManage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Filtra por monitor:', style: TextStyle(fontSize: fontSizeSmall)),
-                      FutureBuilder<List<String>>(
-                        future: monitoresFuture,
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return CircularProgressIndicator();
-                          } else if (snapshot.hasError) {
-                            return Text('Error: ${snapshot.error}');
-                          } else {
-                            List<String> monitores = snapshot.data ?? [];
-                            if (!monitores.contains('Todos')) {
-                              monitores.add('Todos');
-                            }
-                            return DropdownButton<String>(
-                              value: _selectedMonitor,
-                              onChanged: (String? newValue) {
-                                setState(() {
-                                  _selectedMonitor = newValue;
-                                });
-                              },
-                              items: monitores.map((String value) {
-                                return DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Text(value, style: TextStyle(fontSize: fontSizeSmall)),
-                                );
-                              }).toList(),
-                            );
+                      StreamBuilder<QuerySnapshot>(
+                        stream: _usuariosStream,
+                        builder: (context, usuarios) {
+                          if (usuarios.hasError) {
+                            return const CircularProgressIndicator();
                           }
+                          if (usuarios.connectionState == ConnectionState.waiting) {
+                            return Container();
+                          }
+                          final data = usuarios.data!;
+                          List<String> monitores = [];
+                          for (int i = 0; i < data.docs.length; i++) {
+                            if (data.docs[i]['rol'] == 'Estandard') {
+                              monitores.add(data.docs[i]['nombre'] + ' ' + data.docs[i]['apellido']);
+                            }
+                          }
+                          monitores.add('Todos');
+                          return DropdownButton<String>(
+                            value: _selectedMonitor,
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                _selectedMonitor = newValue;
+                              });
+                            },
+                            items: monitores.map((String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value, style: TextStyle(fontSize: fontSizeSmall)),
+                              );
+                            }).toList(),
+                          );
                         },
                       ),
                     ],
@@ -116,7 +118,7 @@ class _SummerCamperManageState extends State<SummerCamperManage> {
               stream: _estudiantesStream,
               builder: (context, estudiante) {
                 if (estudiante.hasError) {
-                  return ConnectionError();
+                  return const Text('Error de conexión');
                 }
                 if (estudiante.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -192,7 +194,7 @@ class _SummerCamperManageState extends State<SummerCamperManage> {
                 },
                 child: Icon(Icons.add, size: iconSize),
               ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             if (userRol == 'Administrador' || userRol == 'Estandard')
               FloatingActionButton(
                 shape: const CircleBorder(),

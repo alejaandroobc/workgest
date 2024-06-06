@@ -1,15 +1,12 @@
 import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:workgest/model/firebase_datas.dart';
+import 'package:workgest/model/firebase_data.dart';
 import 'package:workgest/model/user_item.dart';
-import 'package:workgest/screens/firebaseactions/user/register_user.dart';
-import 'package:workgest/screens/firebaseactions/user/update_user.dart';
-
-import '../../error/conection_error.dart';
 import '../../viewmodel/user_viewmodel.dart';
+import '../firebaseactions/user/register_user.dart';
+import '../firebaseactions/user/update_user.dart';
 
 class UserManage extends StatefulWidget {
   final User user;
@@ -63,7 +60,7 @@ class _UserManageState extends State<UserManage> {
           stream: _usuariosStream,
           builder: (context, usuarios) {
             if (usuarios.hasError) {
-              return ConnectionError();
+              return const Text('Error de conexión');
             }
             if (usuarios.hasData) {
               final data = usuarios.data;
