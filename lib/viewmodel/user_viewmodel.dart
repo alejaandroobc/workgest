@@ -115,7 +115,7 @@ class UserViewModel {
       return false;
     }
 
-    if (isValidEmail(email)) {
+    if (!isValidEmail(email)) {
       _statusMessage = "El correo electrónico no tiene un formato válido.";
       return false;
     }
